@@ -1,0 +1,47 @@
+<div class="row row-cols-1 row-cols-md-3 g-4 py-4">
+  @for (p of filteratedList; track p.id) {
+    <div class="col">
+      <div class="card h-100 flaura-card" [ngClass]="{'out-of-stock': p.quantity === 0}">
+
+        <!-- Badges -->
+        <div class="position-relative">
+          <img [src]="p.imgUrl" class="card-img-top flaura-card-img" [alt]="p.name" />
+          @if (p.isNew) {
+            <span class="badge flaura-badge-new position-absolute top-0 start-0 m-2">
+              New Arrival
+            </span>
+          }
+          @if (p.quantity === 0) {
+            <span class="badge flaura-badge-sold position-absolute top-0 end-0 m-2">
+              Sold Out
+            </span>
+          }
+          @if (p.quantity === 1) {
+            <span class="badge flaura-badge-last position-absolute top-0 end-0 m-2">
+              Last Piece
+            </span>
+          }
+        </div>
+
+        <!-- Card Body -->
+        <div class="card-body text-center">
+          <h5 class="card-title flaura-product-name">{{ p.name }}</h5>
+          <p class="card-text flaura-description">{{ p.description }}</p>
+          <p class="flaura-price">{{ p.price | calc }}</p>
+        </div>
+
+        <!-- Card Footer -->
+        <div class="card-footer text-center border-0 pb-3">
+          <button
+            class="btn flaura-btn-add"
+            [disabled]="p.quantity === 0"
+            (click)="addToCart(p)"
+          >
+            {{ p.quantity === 0 ? 'Sold Out' : 'Add to Cart' }}
+          </button>
+        </div>
+
+      </div>
+    </div>
+  }
+</div>

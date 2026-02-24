@@ -1,0 +1,35 @@
+<!-- Cart Summary Bar -->
+<div class="flaura-cart-bar d-flex justify-content-end align-items-center px-4 py-2">
+  <span class="flaura-cart-label me-3">
+    🛍 {{ cartCount }} items
+  </span>
+  <span class="flaura-cart-total">
+    Total: SAR {{ grandTotal.toLocaleString() }}
+  </span>
+</div>
+
+<!-- Section Title -->
+<div class="text-center py-5">
+  <p class="flaura-section-sub">Curated For You</p>
+  <h2 class="flaura-section-title">The Collection</h2>
+  <div class="flaura-divider mx-auto"></div>
+</div>
+
+<!-- Category Filter Tabs -->
+<div class="d-flex justify-content-center flex-wrap gap-2 pb-4">
+  @for (cat of catList; track cat.id) {
+    <button
+      class="btn flaura-cat-btn"
+      [ngClass]="{'active': selectedCatId === cat.id}"
+      (click)="selectCategory(cat.id)"
+    >
+      {{ cat.name }}
+    </button>
+  }
+</div>
+
+<!-- Products Grid -->
+<app-products
+  [recievedID]="selectedCatId"
+  (total)="receiveTotal($event)">
+</app-products>

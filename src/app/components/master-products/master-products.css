@@ -1,0 +1,67 @@
+/* ── Cart Bar ── */
+.flaura-cart-bar {
+  background-color: #3B2F2F;
+  color: #c9b8af;
+  font-size: 0.7rem;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  font-family: 'Montserrat', sans-serif;
+  min-height: 44px;
+}
+
+.flaura-cart-label  { color: #c9b8af; }
+.flaura-cart-divider { color: #5a4a44; }
+.flaura-cart-total  { color: #D4AF7A; font-weight: 500; letter-spacing: 2px; }
+
+/* ── Section Header ── */
+.flaura-section-header {
+  background-color: #FDF8F5;
+}
+
+.flaura-section-sub {
+  font-size: 0.65rem;
+  letter-spacing: 5px;
+  text-transform: uppercase;
+  color: #C9956C;
+  font-family: 'Montserrat', sans-serif;
+}
+
+.flaura-section-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 3rem;
+  font-weight: 300;
+  color: #3B2F2F;
+  letter-spacing: 4px;
+}
+
+.flaura-divider {
+  width: 50px;
+  height: 1px;
+  background: linear-gradient(to right, transparent, #C9956C, transparent);
+}
+
+/* ── Category Tabs ── */
+.flaura-cat-btn {
+  background-color: transparent;
+  border: 1px solid #e0cfc5;
+  color: #a89080;
+  border-radius: 0;
+  padding: 8px 22px;
+  font-size: 0.65rem;
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  font-family: 'Montserrat', sans-serif;
+  transition: all 0.3s ease;
+}
+
+.flaura-cat-btn:hover {
+  border-color: #C9956C;
+  color: #C9956C;
+}
+
+.flaura-cat-btn--active {
+  background-color: #C9956C !important;
+  border-color: #C9956C !important;
+  color: #fff !important;
+  letter-spacing: 3px;
+}
