@@ -15,11 +15,12 @@ export class MasterProducts {
   cartCount:     number = 0;
 
   catList: ICategory[] = [
-    { id: 0, name: 'All Pieces'             },
-    { id: 1, name: 'Dresses & Gowns'        },
-    { id: 2, name: 'Handbags & Accessories' },
-    { id: 3, name: 'Shoes & Heels'          },
-    { id: 4, name: 'Outerwear & Coats'      },
+    { id: 0, name: 'All Pieces' },
+    { id: 1, name: 'Elegant Suits' },
+  { id: 2, name: 'Luxury Bags' },
+  { id: 3, name: 'Shoes' },
+  { id: 4, name: 'Coats' },
+  { id: 5, name: 'Dresses' }
   ];
 
   receiveTotal(total: number) {

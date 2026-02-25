@@ -6,5 +6,4 @@ export interface IProduct {
   imgUrl: string;
   categoryId: number;
   description: string;
-  isNew: boolean;
 }
