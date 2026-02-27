@@ -3,6 +3,23 @@
 }
 
 .card-img-top {
-  height: 600px;        /* same height for all images */
-  object-fit: cover;    /* crop image without distortion */
+  height: 600px;       
+  object-fit: cover;   
+}
+button.addtocart {
+  background-color: #3B2F2F;
+  color: #fff;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  letter-spacing: 1px;
+  transition: all 0.3s ease;
+}
+
+button.addtocart:hover {
+  background-color: #D4AF7A;
+  color: #3B2F2F;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
 }

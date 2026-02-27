@@ -15,9 +15,9 @@ export class MasterProducts {
   cartCount:     number = 0;
 
   catList: ICategory[] = [
-    { id: 0, name: 'All Pieces' },
-    { id: 1, name: 'Elegant Suits' },
-  { id: 2, name: 'Luxury Bags' },
+  { id: 0, name: 'All Pieces' },
+  { id: 1, name: 'Suits' },
+  { id: 2, name: 'Bags' },
   { id: 3, name: 'Shoes' },
   { id: 4, name: 'Coats' },
   { id: 5, name: 'Dresses' }

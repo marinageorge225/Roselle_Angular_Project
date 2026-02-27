@@ -3,10 +3,11 @@ import { IProduct } from '../../models/iproduct';
 
 import { CommonModule, NgClass } from '@angular/common';
 import { CalcPipe } from '../../pipes/calc-pipe-pipe';
+import { HighlightCard } from '../../directives/highlight-card';
 
 @Component({
   selector: 'app-products',
-  imports: [CalcPipe, NgClass , CommonModule],
+  imports: [CalcPipe, NgClass , CommonModule, HighlightCard],
   templateUrl: './products.html',
   styleUrl: './products.css',
 })
@@ -47,7 +48,7 @@ export class Products implements OnInit, OnChanges {
     quantity: 5,
     imgUrl: 'assets/images/img3.jpg',
     categoryId: 2,
-    description: 'Premium textured leather accented with a delicate gold-tone chain.'
+    description: 'Premium textured leather accented with a delicate gold-tone accessories and chain.'
   },
   {
     id: 4,
@@ -76,7 +77,7 @@ export class Products implements OnInit, OnChanges {
     quantity: 2,
     imgUrl: 'assets/images/img6.jpg',
     categoryId: 3,
-    description: 'Rich tone and refined finish designed for evening sophistication.'
+    description: 'Rich tone and refined finish red heels designed for evening sophistication and nights.'
   },
 
   // --- Coats (categoryId: 4) ---
@@ -107,7 +108,7 @@ export class Products implements OnInit, OnChanges {
     quantity: 3,
     imgUrl: 'assets/images/img9.jpg',
     categoryId: 5,
-    description: 'Flowing silhouette with subtle gold accents for refined evening glamour.'
+    description: 'Long Flowing silhouette with subtle gold accents for refined evening glamour.'
   },
   {
     id: 10,

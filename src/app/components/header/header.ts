@@ -1,27 +1,22 @@
-import { Component, HostListener, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { RouterModule } from '@angular/router';
+import { Component, HostListener } from '@angular/core';
+import { CommonModule }            from '@angular/common';
+import { RouterLink, RouterLinkActive } from '@angular/router';
 
 @Component({
   selector: 'app-header',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterLink, RouterLinkActive],
   templateUrl: './header.html',
-  styleUrls: ['./header.css']
+  styleUrls: ['./header.css'],
 })
-export class Header implements OnInit {
+export class Header {
+
   isScrolled = false;
   menuOpen   = false;
 
-  ngOnInit(): void {}
-
   @HostListener('window:scroll')
   onScroll(): void {
-    this.isScrolled = window.scrollY > 30;
-  }
-
-  toggleMenu(): void {
-    this.menuOpen = !this.menuOpen;
+    this.isScrolled = window.scrollY > 10;
   }
 
   closeMenu(): void {
