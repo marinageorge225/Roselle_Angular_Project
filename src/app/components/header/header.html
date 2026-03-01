@@ -9,11 +9,9 @@
 
     <!-- ── Desktop Nav ── -->
     <nav class="desk-nav">
-      <a class="lnk" routerLink="/"        routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Home</a>
-      <a class="lnk" routerLink="/shop"    routerLinkActive="active">Shop</a>
-      <a class="lnk" routerLink="/about"   routerLinkActive="active">About</a>
-      <a class="lnk" routerLink="/gallery" routerLinkActive="active">Gallery</a>
-      <a class="lnk" routerLink="/contact" routerLinkActive="active">Contact</a>
+      <a class="lnk" routerLink="/Master" >Home</a>
+      <a class="lnk" routerLink="/About">About</a>
+      <a class="lnk" routerLink="/Contact">Contact</a>
     </nav>
 
     <!-- ── Right: CTA + icons ── -->
@@ -38,10 +36,7 @@
 
 <!-- ── Mobile Drawer ── -->
 <nav class="drawer" [class.open]="menuOpen">
-  <a routerLink="/"        routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="closeMenu()">Home</a>
-  <a routerLink="/shop"    routerLinkActive="active" (click)="closeMenu()">Shop</a>
-  <a routerLink="/about"   routerLinkActive="active" (click)="closeMenu()">About</a>
-  <a routerLink="/gallery" routerLinkActive="active" (click)="closeMenu()">Gallery</a>
-  <a routerLink="/contact" routerLinkActive="active" (click)="closeMenu()">Contact</a>
-  <a class="cta-btn" routerLink="/shop" (click)="closeMenu()">Shop Now</a>
+  <a class="lnk" routerLink="/Master" >Home</a>
+  <a class="lnk" routerLink="/About">About</a>
+  <a class="lnk" routerLink="/Contact">Contact</a>
 </nav>

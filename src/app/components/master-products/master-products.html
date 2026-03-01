@@ -3,7 +3,7 @@
   <div class="d-flex align-items-center justify-content-between">
     <div>
       <div class="flaura-cart-items">{{ cartCount }} Items</div>
-      <div class="flaura-cart-price">SAR {{ grandTotal.toLocaleString() }}</div>
+      <div class="flaura-cart-price">EGP {{ grandTotal.toLocaleString() }}</div>
     </div>
 
     <button class="btn btn-sm flaura-view-cart-btn">View Cart</button>
@@ -48,6 +48,7 @@
 <!-- ===================== Products Section ===================== -->
 <section class="py-4">
   <div class="container">
+    <!--bab3t mny ana al parent lel child l product l catID 3shan ye3red 3la asasha l products-->
     <app-products [recievedID]="selectedCatId" (total)="receiveTotal($event)"> </app-products>
   </div>
 </section>
