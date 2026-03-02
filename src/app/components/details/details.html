@@ -1,8 +1,3 @@
-<!-- ═══════════════════════════════════════════
-     ROSELLE — Product Details
-     Angular template · Bootstrap 5
-═══════════════════════════════════════════ -->
-
 <!-- ── NOT FOUND ── -->
 <div *ngIf="!product" class="not-found-wrap">
   <span class="eyebrow-label">Item Not Found</span>
@@ -15,6 +10,13 @@
 
 <!-- ── PRODUCT FOUND ── -->
 <div *ngIf="product as p" class="details-page">
+
+  <!-- Back Button -->
+  <div class="container-xxl px-4 px-md-5 pt-3">
+    <button class="btn-rsl btn-rsl--ghost d-inline-flex align-items-center gap-2" (click)="goBack()">
+      <i class="fas fa-arrow-left" style="font-size:11px;"></i> Back
+    </button>
+  </div>
 
   <!-- BREADCRUMB -->
   <nav class="rsl-breadcrumb" aria-label="breadcrumb">
@@ -38,17 +40,11 @@
         <div class="col-lg-6">
           <div class="image-panel">
             <div class="image-frame">
-              <img
-                [src]="p.imgUrl"
-                [alt]="p.name"
-                class="product-img"
-              />
-              <!-- Stock badge -->
+              <img [src]="p.imgUrl" [alt]="p.name" class="product-img" />
               <span class="stock-badge" [class.out]="p.quantity === 0">
                 {{ p.quantity > 0 ? 'In Stock' : 'Sold Out' }}
               </span>
             </div>
-            <!-- Decorative offset border -->
             <div class="frame-deco"></div>
           </div>
         </div>
@@ -57,13 +53,10 @@
         <div class="col-lg-6">
           <div class="info-panel">
 
-            <!-- Category tag -->
             <span class="eyebrow-label anim-1">Category #{{ p.categoryId }}</span>
 
-            <!-- Name -->
             <h1 class="product-name anim-2">{{ p.name }}</h1>
 
-            <!-- Ornament -->
             <div class="ornament anim-3">
               <div class="orn-line"></div>
               <div class="orn-diamond"></div>
@@ -87,7 +80,6 @@
               </span>
             </div>
 
-            <!-- Divider -->
             <div class="info-divider anim-5"></div>
 
             <!-- Description -->
@@ -96,18 +88,45 @@
               <p class="desc-text">{{ p.description }}</p>
             </div>
 
-            <!-- Actions -->
+            <!-- ── ACTIONS ── -->
             <div class="actions-row anim-6">
+
+              <!-- Add to Bag button — wired to addToCart() -->
               <button
                 class="btn-rsl btn-rsl--primary"
+                [class.btn-rsl--added]="addedToCart"
                 [disabled]="p.quantity === 0"
+                (click)="addToCart()"
               >
-                <i class="fas fa-shopping-bag me-2"></i>
-                {{ p.quantity > 0 ? 'Add to Bag' : 'Sold Out' }}
+                <!-- Default state -->
+                <ng-container *ngIf="!addedToCart && p.quantity > 0">
+                  <i class="fas fa-bag-shopping me-2"></i> Add to Bag
+                </ng-container>
+                <!-- Added state -->
+                <ng-container *ngIf="addedToCart">
+                  <i class="fas fa-check me-2"></i> Added to Bag
+                </ng-container>
+                <!-- Sold out -->
+                <ng-container *ngIf="p.quantity === 0">
+                  Sold Out
+                </ng-container>
               </button>
+
+              <!-- Wishlist -->
               <button class="btn-rsl btn-rsl--outline">
                 <i class="far fa-heart"></i>
               </button>
+
+              <!-- View Cart shortcut (appears after adding) -->
+              <a
+                *ngIf="addedToCart"
+                routerLink="/cart"
+                class="btn-rsl btn-rsl--view-cart"
+              >
+                <i class="fas fa-bag-shopping me-2"></i>
+                View Bag ({{ cartCount }})
+              </a>
+
             </div>
 
             <!-- Meta strip -->
@@ -132,4 +151,31 @@
       </div><!-- /row -->
     </div>
   </section>
+
+  <!-- ── DETAILS STRIP ── -->
+  <section class="details-strip">
+    <div class="container-xxl px-4 px-md-5">
+      <div class="row g-4">
+        <div class="col-md-4">
+          <div class="detail-card">
+            <span class="detail-card__label">Product ID</span>
+            <span class="detail-card__value">#{{ p.id | number:'4.0-0' }}</span>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="detail-card">
+            <span class="detail-card__label">Category</span>
+            <span class="detail-card__value">No. {{ p.categoryId }}</span>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="detail-card">
+            <span class="detail-card__label">Units Available</span>
+            <span class="detail-card__value">{{ p.quantity }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
 </div><!-- /details-page -->

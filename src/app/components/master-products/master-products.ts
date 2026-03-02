@@ -3,11 +3,12 @@ import { Products } from '../products/products';
 import { ICategory } from '../../models/icategory';
 import { NgClass, CommonModule } from '@angular/common';
 import { StaticProducts } from '../../services/static-products';
+import { RouterLink, RouterLinkActive } from '@angular/router';
 
 @Component({
   selector: 'app-master-products',
   standalone: true,
-  imports: [CommonModule, Products, NgClass],
+  imports: [CommonModule, Products, NgClass ,  RouterLink, RouterLinkActive],
   templateUrl: './master-products.html',
   styleUrl: './master-products.css',
 })
