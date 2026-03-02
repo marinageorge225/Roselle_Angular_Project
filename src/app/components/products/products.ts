@@ -12,11 +12,12 @@ import { IProduct } from '../../models/iproduct';
 import { CalcPipe } from '../../pipes/calc-pipe-pipe';
 import { HighlightCard } from '../../directives/highlight-card';
 import { StaticProducts } from '../../services/static-products';
+import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 
 @Component({
   selector: 'app-products',
   standalone: true,
-  imports: [CommonModule, NgClass, CalcPipe, HighlightCard],
+  imports: [CommonModule, NgClass, CalcPipe, HighlightCard,RouterLink, RouterLinkActive],
   templateUrl: './products.html',
   styleUrl: './products.css',
 })
@@ -29,7 +30,7 @@ export class Products implements OnInit, OnChanges {
   products: IProduct[] = [];
   filteratedList: IProduct[] = [];
 
-  constructor(private prdService: StaticProducts) {}
+  constructor(private prdService: StaticProducts , private router:Router) {}
 //products list
   ngOnInit(): void {
     this.products = this.prdService.getAllProducts();
@@ -55,5 +56,8 @@ export class Products implements OnInit, OnChanges {
     this.totalPrice += p.price;
     this.total.emit(this.totalPrice);
     p.quantity--;
+  }
+  navigateToDetails(id:number){
+    this.router.navigate(['/Details' , id])
   }
 }

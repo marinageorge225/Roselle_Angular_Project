@@ -12,8 +12,15 @@
           <p *ngSwitchDefault >Quantity : {{product.quantity}}</p>
         </div>
         <button class="addtocart" (click)="addToCart(product)">Add to Cart</button>
+      <br>
+      <br>
+        <!-- <button class="btn btn-outline-secondary" routerLink="/Details"  >Show details</button>
+   -->
+         <button class="btn btn-outline-secondary" (click)="navigateToDetails(product.id)"  >Show details</button>
+  
+        
       </div>
-    </div>
+       </div>
   </div>
  
 </div>

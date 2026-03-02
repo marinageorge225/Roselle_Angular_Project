@@ -8,9 +8,9 @@ import { Products } from './components/products/products';
 import { MasterProducts } from './components/master-products/master-products';
 
 export const routes: Routes = [
+    {path:'', component:MasterProducts},
     {path:'About' , component:AboutUs},
     {path:'Contact' , component : Contact},
-    {path:'Deatils' ,component:Details},
-    {path:'Products' , component:Products},
+    {path:'Details/:id' ,component:Details},
     {path:'Master' ,  component:MasterProducts},
 ];

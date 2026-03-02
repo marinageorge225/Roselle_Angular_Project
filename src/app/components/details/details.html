@@ -1,1 +1,135 @@
-<p>details works!</p>
+<!-- ═══════════════════════════════════════════
+     ROSELLE — Product Details
+     Angular template · Bootstrap 5
+═══════════════════════════════════════════ -->
+
+<!-- ── NOT FOUND ── -->
+<div *ngIf="!product" class="not-found-wrap">
+  <span class="eyebrow-label">Item Not Found</span>
+  <h2 class="not-found-title">This piece has left<br /><em>the atelier.</em></h2>
+  <p class="not-found-body">
+    The product you're looking for no longer exists or may have been removed.
+  </p>
+  <a routerLink="/Master" class="btn-rsl mt-4 d-inline-block">Return to Collection</a>
+</div>
+
+<!-- ── PRODUCT FOUND ── -->
+<div *ngIf="product as p" class="details-page">
+
+  <!-- BREADCRUMB -->
+  <nav class="rsl-breadcrumb" aria-label="breadcrumb">
+    <div class="container-xxl px-4 px-md-5">
+      <ol>
+        <li><a routerLink="/Master">Home</a></li>
+        <li><span class="sep">·</span></li>
+        <li><a routerLink="/shop">Shop</a></li>
+        <li><span class="sep">·</span></li>
+        <li class="current">{{ p.name }}</li>
+      </ol>
+    </div>
+  </nav>
+
+  <!-- ── MAIN SPLIT ── -->
+  <section class="product-section">
+    <div class="container-xxl px-4 px-md-5">
+      <div class="row g-0 align-items-start">
+
+        <!-- ── LEFT · IMAGE PANEL ── -->
+        <div class="col-lg-6">
+          <div class="image-panel">
+            <div class="image-frame">
+              <img
+                [src]="p.imgUrl"
+                [alt]="p.name"
+                class="product-img"
+              />
+              <!-- Stock badge -->
+              <span class="stock-badge" [class.out]="p.quantity === 0">
+                {{ p.quantity > 0 ? 'In Stock' : 'Sold Out' }}
+              </span>
+            </div>
+            <!-- Decorative offset border -->
+            <div class="frame-deco"></div>
+          </div>
+        </div>
+
+        <!-- ── RIGHT · INFO PANEL ── -->
+        <div class="col-lg-6">
+          <div class="info-panel">
+
+            <!-- Category tag -->
+            <span class="eyebrow-label anim-1">Category #{{ p.categoryId }}</span>
+
+            <!-- Name -->
+            <h1 class="product-name anim-2">{{ p.name }}</h1>
+
+            <!-- Ornament -->
+            <div class="ornament anim-3">
+              <div class="orn-line"></div>
+              <div class="orn-diamond"></div>
+              <div class="orn-line"></div>
+            </div>
+
+            <!-- Price -->
+            <div class="price-row anim-4">
+              <span class="price-label">Price</span>
+              <span class="price-value">{{ p.price | currency:'EGP':'symbol':'1.0-0' }}</span>
+            </div>
+
+            <!-- Availability -->
+            <div class="availability-row anim-4">
+              <span class="avail-label">Availability</span>
+              <span class="avail-value" [class.low]="p.quantity > 0 && p.quantity <= 5">
+                <span class="avail-dot" [class.out]="p.quantity === 0"></span>
+                <ng-container *ngIf="p.quantity > 5">{{ p.quantity }} pieces available</ng-container>
+                <ng-container *ngIf="p.quantity > 0 && p.quantity <= 5">Only {{ p.quantity }} left</ng-container>
+                <ng-container *ngIf="p.quantity === 0">Out of Stock</ng-container>
+              </span>
+            </div>
+
+            <!-- Divider -->
+            <div class="info-divider anim-5"></div>
+
+            <!-- Description -->
+            <div class="desc-block anim-5">
+              <p class="desc-eyebrow">About this piece</p>
+              <p class="desc-text">{{ p.description }}</p>
+            </div>
+
+            <!-- Actions -->
+            <div class="actions-row anim-6">
+              <button
+                class="btn-rsl btn-rsl--primary"
+                [disabled]="p.quantity === 0"
+              >
+                <i class="fas fa-shopping-bag me-2"></i>
+                {{ p.quantity > 0 ? 'Add to Bag' : 'Sold Out' }}
+              </button>
+              <button class="btn-rsl btn-rsl--outline">
+                <i class="far fa-heart"></i>
+              </button>
+            </div>
+
+            <!-- Meta strip -->
+            <div class="meta-strip anim-6">
+              <div class="meta-item">
+                <i class="fas fa-truck-fast"></i>
+                <span>Free delivery over 1,000 EGP</span>
+              </div>
+              <div class="meta-item">
+                <i class="fas fa-rotate-left"></i>
+                <span>14-day returns</span>
+              </div>
+              <div class="meta-item">
+                <i class="fas fa-shield-halved"></i>
+                <span>Authenticity guaranteed</span>
+              </div>
+            </div>
+
+          </div><!-- /info-panel -->
+        </div>
+
+      </div><!-- /row -->
+    </div>
+  </section>
+</div><!-- /details-page -->
