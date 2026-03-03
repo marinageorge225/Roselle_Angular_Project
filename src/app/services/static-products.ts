@@ -43,7 +43,7 @@ export class StaticProducts {
   },
   {
     id: 4,
-    name: 'The Executive Leather Tote',
+    name: 'The Executive Leather Tote Bag',
     price: 3500,
     quantity: 4,
     imgUrl: 'assets/images/img4.jpg',
