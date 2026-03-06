@@ -38,6 +38,7 @@ export class AuthService {
   private users: IUser[] = [
     { id: 1, name: 'Admin User', email: 'admin@roselle.com', role: 'admin', verified: true },
     { id: 2, name: 'Jane Doe', email: 'jane@example.com', role: 'user', verified: true },
+    { id: 3, name: 'Marina', email: 'marina@example.com', role: 'user', verified: true },
   ];
 
   currentUser = this._currentUser.asReadonly();
