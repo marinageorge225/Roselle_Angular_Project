@@ -27,7 +27,7 @@ export class Wishlist implements OnInit {
   }
 
   loadWishlist(): void {
-    const ids = this.auth.wishlist();
+    const ids = this.auth.wishlist;
     this.wishlistProducts = ids.map(id => this.products.getProductById(id)).filter(Boolean) as IProduct[];
   }
 

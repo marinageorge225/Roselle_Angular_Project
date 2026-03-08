@@ -15,6 +15,7 @@ export class Header {
   isScrolled = false;
   menuOpen = false;
   userMenuOpen = false;
+  darkMode = false;
 
   constructor(
     private auth: AuthService,
@@ -32,13 +33,18 @@ export class Header {
     }
   }
 
+  toggleDark(): void {
+    this.darkMode = !this.darkMode;
+    document.documentElement.classList.toggle('dark-theme', this.darkMode);
+  }
+
   closeMenu(): void { this.menuOpen = false; }
 
   get isLoggedIn(): boolean { return this.auth.isLoggedIn(); }
   get isAdmin(): boolean { return this.auth.isAdmin(); }
   get currentUser() { return this.auth.currentUser(); }
   get cartCount(): number { return this.cart.getCartCount(); }
-  get wishlistCount(): number { return this.auth.wishlist().length; }
+  get wishlistCount(): number { return this.auth.wishlistCount; }
 
   logout(): void {
     this.auth.logout();

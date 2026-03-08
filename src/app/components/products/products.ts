@@ -1,12 +1,4 @@
-import {
-  Component,
-  EventEmitter,
-  Input,
-  OnChanges,
-  OnInit,
-  Output
-} from '@angular/core';
-
+import { Component, EventEmitter, Input, OnChanges, OnInit, Output } from '@angular/core';
 import { CommonModule, NgClass } from '@angular/common';
 import { IProduct } from '../../models/iproduct';
 import { CalcPipe } from '../../pipes/calc-pipe-pipe';
@@ -24,8 +16,8 @@ import { AuthService } from '../../services/auth.service';
   styleUrl: './products.css',
 })
 export class Products implements OnInit, OnChanges {
-
   @Input() recievedID: number = 0;
+  @Input() overrideProducts: IProduct[] | null = null;
   @Output() total = new EventEmitter<number>();
 
   totalPrice: number = 0;
@@ -45,29 +37,30 @@ export class Products implements OnInit, OnChanges {
     this.FilterationList();
   }
 
-  ngOnChanges(): void {
-    this.FilterationList();
-  }
+  ngOnChanges(): void { this.FilterationList(); }
 
   FilterationList() {
-    if (this.recievedID == 0) {
-      this.filteratedList = this.products;
-    } else {
-      this.filteratedList = this.prdService.getProductByCatId(this.recievedID);
+    if (this.overrideProducts !== null) {
+      this.filteratedList = this.overrideProducts;
+      return;
     }
+    this.filteratedList = this.recievedID === 0
+      ? this.products
+      : this.prdService.getProductByCatId(this.recievedID);
   }
 
   addToCart(p: IProduct) {
-    if (p.quantity === 0) return;
-    this.cartService.addToCart(p);
-    this.totalPrice += p.price;
+    // Use live stock from service
+    const live = this.prdService.getProductById(p.id);
+    if (!live || live.quantity <= 0) return;
+
+    this.cartService.addToCart(live);
+    this.totalPrice += live.price;
     this.total.emit(this.totalPrice);
-    // Brief feedback then navigate to cart
+
     this.addedToCartId = p.id;
-    setTimeout(() => {
-      this.addedToCartId = null;
-      this.router.navigate(['/cart']);
-    }, 600);
+    setTimeout(() => this.addedToCartId = null, 800);
+    // No auto-navigate — user sees the updated stock immediately
   }
 
   toggleWishlist(p: IProduct, event: MouseEvent) {
@@ -75,15 +68,13 @@ export class Products implements OnInit, OnChanges {
     this.authService.toggleWishlist(p.id);
   }
 
-  isInWishlist(id: number): boolean {
-    return this.authService.isInWishlist(id);
+  isInWishlist(id: number): boolean { return this.authService.isInWishlist(id); }
+  isInCart(id: number): boolean { return this.cartService.isInCart(id); }
+
+  // Live stock from the source (reflects cart deductions)
+  liveStock(id: number): number {
+    return this.prdService.getProductById(id)?.quantity ?? 0;
   }
 
-  isInCart(id: number): boolean {
-    return this.cartService.isInCart(id);
-  }
-
-  navigateToDetails(id: number) {
-    this.router.navigate(['/Details', id]);
-  }
+  navigateToDetails(id: number) { this.router.navigate(['/Details', id]); }
 }

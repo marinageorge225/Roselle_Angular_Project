@@ -147,11 +147,21 @@
             ✦ You qualify for free shipping!
           </p>
 
+          <!-- Sign-in notice (shown only when guest) -->
+          <div class="signin-notice" *ngIf="!isLoggedIn">
+            <i class="bi bi-person-lock"></i>
+            <span>Please <a routerLink="/login" [queryParams]="{returnUrl:'/checkout'}">sign in</a> to complete your purchase</span>
+          </div>
+
           <!-- Checkout CTA -->
-          <a routerLink="/checkout" class="btn-rsl btn-rsl--primary btn-checkout" style="display:flex;align-items:center;justify-content:center;text-decoration:none;">
-            <i class="fas fa-lock me-2" style="font-size:11px;"></i>
-            Proceed to Checkout
-          </a>
+          <button
+            class="btn-rsl btn-rsl--primary btn-checkout"
+            (click)="proceedToCheckout()"
+            style="width:100%; border:none; cursor:pointer;"
+          >
+            <i class="bi bi-lock me-2" style="font-size:11px;"></i>
+            {{ isLoggedIn ? 'Proceed to Checkout' : 'Sign In to Checkout' }}
+          </button>
 
           <!-- Trust signals -->
           <div class="trust-strip">

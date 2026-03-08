@@ -1,76 +1,77 @@
 import { Injectable } from '@angular/core';
 import { IProduct } from '../models/iproduct';
+import { StaticProducts } from './static-products';
 
-// Cart item extends IProduct with a cartQuantity field
 export interface ICartItem extends IProduct {
   cartQuantity: number;
 }
 
-@Injectable({
-  providedIn: 'root',
-})
+@Injectable({ providedIn: 'root' })
 export class CartService {
   private cartItems: ICartItem[] = [];
 
-  // ── Add or increment ───────────────────────────────
+  constructor(private productService: StaticProducts) {}
+
+  // ── Add ────────────────────────────────────────────
   addToCart(product: IProduct): void {
-    const existing = this.cartItems.find((item) => item.id === product.id);
+    const stock = this.productService.getProductById(product.id);
+    if (!stock || stock.quantity <= 0) return;
+
+    const existing = this.cartItems.find(i => i.id === product.id);
     if (existing) {
-      // don't exceed available stock
-      if (existing.cartQuantity < product.quantity) {
-        existing.cartQuantity++;
-      }
+      existing.cartQuantity++;
     } else {
-      this.cartItems.push({ ...product, cartQuantity: 1 });
+      // Snapshot price/name etc., but quantity in the cart item is cartQuantity
+      this.cartItems.push({ ...stock, cartQuantity: 1 });
     }
+    stock.quantity--;   // deduct from store
   }
 
-  // ── Remove one item entirely ───────────────────────
+  // ── Remove entirely → restore ALL units ───────────
   removeFromCart(productId: number): void {
-    this.cartItems = this.cartItems.filter((item) => item.id !== productId);
-  }
-
-  // ── Increment quantity ─────────────────────────────
-  increment(productId: number): void {
-    const item = this.cartItems.find((i) => i.id === productId);
-    if (item && item.cartQuantity < item.quantity) {
-      item.cartQuantity++;
-    }
-  }
-
-  // ── Decrement quantity (remove if reaches 0) ───────
-  decrement(productId: number): void {
-    const item = this.cartItems.find((i) => i.id === productId);
+    const item = this.cartItems.find(i => i.id === productId);
     if (item) {
-      item.cartQuantity--;
-      if (item.cartQuantity <= 0) {
-        this.removeFromCart(productId);
-      }
+      const stock = this.productService.getProductById(productId);
+      if (stock) stock.quantity += item.cartQuantity;  // restore all
+      this.cartItems = this.cartItems.filter(i => i.id !== productId);
     }
   }
 
-  // ── Clear entire cart ──────────────────────────────
+  // ── Increment (add one more) ───────────────────────
+  increment(productId: number): void {
+    const item  = this.cartItems.find(i => i.id === productId);
+    const stock = this.productService.getProductById(productId);
+    if (item && stock && stock.quantity > 0) {
+      item.cartQuantity++;
+      stock.quantity--;
+    }
+  }
+
+  // ── Decrement (remove one) ─────────────────────────
+  decrement(productId: number): void {
+    const item = this.cartItems.find(i => i.id === productId);
+    if (!item) return;
+
+    const stock = this.productService.getProductById(productId);
+    if (stock) stock.quantity++;   // always restore one unit back
+
+    item.cartQuantity--;
+
+    if (item.cartQuantity <= 0) {
+      // item fully removed — stock already restored above
+      this.cartItems = this.cartItems.filter(i => i.id !== productId);
+    }
+  }
+
+  // ── Clear after purchase (stock already consumed) ─
   clearCart(): void {
     this.cartItems = [];
   }
 
   // ── Getters ────────────────────────────────────────
-  getCartItems(): ICartItem[] {
-    return this.cartItems;
-  }
-
-  getCartCount(): number {
-    return this.cartItems.reduce((sum, item) => sum + item.cartQuantity, 0);
-  }
-
-  getGrandTotal(): number {
-    return this.cartItems.reduce(
-      (sum, item) => sum + item.price * item.cartQuantity,
-      0
-    );
-  }
-
-  isInCart(productId: number): boolean {
-    return this.cartItems.some((item) => item.id === productId);
-  }
+  getCartItems(): ICartItem[]  { return this.cartItems; }
+  getCartCount(): number       { return this.cartItems.reduce((s, i) => s + i.cartQuantity, 0); }
+  getGrandTotal(): number      { return this.cartItems.reduce((s, i) => s + i.price * i.cartQuantity, 0); }
+  isInCart(id: number): boolean { return this.cartItems.some(i => i.id === id); }
+  getCartQuantity(id: number): number { return this.cartItems.find(i => i.id === id)?.cartQuantity ?? 0; }
 }

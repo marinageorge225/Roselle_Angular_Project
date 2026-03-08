@@ -1,5 +1,5 @@
 <div class="row row-cols-1 row-cols-md-4 g-4">
-    <div class="col" *ngFor="let product of filteratedList">
+  <div class="col" *ngFor="let product of filteratedList">
     <div class="card" appHighlightCard>
 
       <!-- Image with wishlist overlay -->
@@ -16,24 +16,26 @@
       </div>
 
       <div class="card-body">
-        <h5 class="card-title" style="color:brown">{{product.name}}</h5>
-        <p class="card-text" style="color:grey">{{product.description}}</p>
+        <h5 class="card-title" style="color:brown">{{ product.name }}</h5>
+        <p class="card-text" style="color:grey">{{ product.description }}</p>
         <p class="card-text">Price: {{ product.price | currency:'EGP ':'symbol':'1.0-0' }}</p>
-        <div [ngSwitch]="product.quantity">
-          <p *ngSwitchCase="0" style="color:red">Quantity : Sold Out</p>
-          <p *ngSwitchCase="1">Quantity : Last Piece</p>
-          <p *ngSwitchDefault>Quantity : {{product.quantity}}</p>
+
+        <!-- Live stock display -->
+        <div [ngSwitch]="liveStock(product.id)">
+          <p *ngSwitchCase="0" style="color:red; font-weight:600">Quantity: Sold Out</p>
+          <p *ngSwitchCase="1" style="color:orange; font-weight:600">Quantity: Last Piece!</p>
+          <p *ngSwitchDefault>Quantity: {{ liveStock(product.id) }}</p>
         </div>
 
         <div class="card-actions">
           <button
             class="addtocart"
             (click)="addToCart(product)"
-            [disabled]="product.quantity === 0"
+            [disabled]="liveStock(product.id) === 0"
             [class.added]="addedToCartId === product.id"
           >
             <i class="bi" [class]="addedToCartId === product.id ? 'bi-check-lg' : 'bi-bag-plus'"></i>
-            {{ addedToCartId === product.id ? 'Added!' : (isInCart(product.id) ? 'Add Again' : 'Add to Cart') }}
+            {{ addedToCartId === product.id ? 'Added!' : (liveStock(product.id) === 0 ? 'Sold Out' : 'Add to Cart') }}
           </button>
           <button class="btn-details" (click)="navigateToDetails(product.id)">
             <i class="bi bi-eye"></i>

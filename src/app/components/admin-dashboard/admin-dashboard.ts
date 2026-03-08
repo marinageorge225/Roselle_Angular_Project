@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { RouterLink, Router } from '@angular/router';
 import { StaticProducts } from '../../services/static-products';
 import { IProduct } from '../../models/iproduct';
-import { AuthService } from '../../services/auth.service';
+import { AuthService, IUser, IPromoCode, IBanner } from '../../services/auth.service';
 
 @Component({
   selector: 'app-admin-dashboard',
@@ -15,12 +15,24 @@ import { AuthService } from '../../services/auth.service';
 })
 export class AdminDashboard implements OnInit {
   products: IProduct[] = [];
-  activeTab = 'products'; // products | orders | users
+  activeTab = 'products';
   searchTerm = '';
   showModal = false;
   editingProduct: IProduct | null = null;
-
   form: Partial<IProduct> = {};
+
+  // User management
+  users: IUser[] = [];
+
+  // Promo codes
+  showPromoModal = false;
+  editingPromo: IPromoCode | null = null;
+  promoForm: Partial<IPromoCode> = {};
+
+  // Banners
+  showBannerModal = false;
+  editingBanner: IBanner | null = null;
+  bannerForm: Partial<IBanner> = {};
 
   constructor(
     private productService: StaticProducts,
@@ -29,39 +41,25 @@ export class AdminDashboard implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    if (!this.auth.isAdmin()) {
-      this.router.navigate(['/login']);
-      return;
-    }
+    if (!this.auth.isAdmin()) { this.router.navigate(['/login']); return; }
     this.products = this.productService.getAllProducts();
+    this.users = this.auth.getAllUsers();
   }
 
+  // ── Products ──────────────────────────────────────
   get filteredProducts(): IProduct[] {
-    return this.products.filter(p =>
-      p.name.toLowerCase().includes(this.searchTerm.toLowerCase())
-    );
+    return this.products.filter(p => p.name.toLowerCase().includes(this.searchTerm.toLowerCase()));
   }
 
-  get orders() { return this.auth.orders(); }
-
-  openAdd(): void {
-    this.editingProduct = null;
-    this.form = { categoryId: 1, quantity: 1 };
-    this.showModal = true;
-  }
-
-  openEdit(product: IProduct): void {
-    this.editingProduct = product;
-    this.form = { ...product };
-    this.showModal = true;
-  }
+  openAdd(): void { this.editingProduct = null; this.form = { categoryId: 1, quantity: 1 }; this.showModal = true; }
+  openEdit(product: IProduct): void { this.editingProduct = product; this.form = { ...product }; this.showModal = true; }
 
   save(): void {
     if (!this.form.name || !this.form.price) return;
     if (this.editingProduct) {
       Object.assign(this.editingProduct, this.form);
     } else {
-      const newProd: IProduct = {
+      this.products.push({
         id: Math.max(...this.products.map(p => p.id)) + 1,
         name: this.form.name!,
         price: this.form.price!,
@@ -69,26 +67,94 @@ export class AdminDashboard implements OnInit {
         imgUrl: this.form.imgUrl || 'assets/images/img1.jpg',
         categoryId: this.form.categoryId || 1,
         description: this.form.description || '',
-      };
-      this.products.push(newProd);
+      });
     }
     this.showModal = false;
   }
 
   delete(id: number): void {
-    if (confirm('Delete this product?')) {
-      this.products = this.products.filter(p => p.id !== id);
-    }
+    if (confirm('Delete this product?')) this.products = this.products.filter(p => p.id !== id);
   }
 
-  logout(): void { this.auth.logout(); }
+  getCategoryName(id: number): string {
+    const map: Record<number, string> = { 1: 'Suits', 2: 'Bags', 3: 'Shoes', 4: 'Coats', 5: 'Dresses' };
+    return map[id] ?? 'Other';
+  }
 
+  // ── Featured ──────────────────────────────────────
+  isFeatured(id: number): boolean { return this.auth.featuredProductIds().includes(id); }
+  toggleFeatured(id: number): void { this.auth.toggleFeaturedProduct(id); }
+
+  // ── Orders ────────────────────────────────────────
+  get orders() { return this.auth.allOrders; }
+
+  // ── Users ─────────────────────────────────────────
+  refreshUsers(): void { this.users = this.auth.getAllUsers(); }
+
+  toggleUser(id: number): void {
+    this.auth.toggleUserStatus(id);
+    this.refreshUsers();
+  }
+
+  // ── Promo Codes ───────────────────────────────────
+  get promoCodes() { return this.auth.promoCodes(); }
+
+  openAddPromo(): void { this.editingPromo = null; this.promoForm = { discountType: 'percent', active: true }; this.showPromoModal = true; }
+  openEditPromo(p: IPromoCode): void { this.editingPromo = p; this.promoForm = { ...p }; this.showPromoModal = true; }
+
+  savePromo(): void {
+    if (!this.promoForm.code || !this.promoForm.discountValue) return;
+    if (this.editingPromo) {
+      this.auth.updatePromoCode(this.editingPromo.id, this.promoForm);
+    } else {
+      this.auth.addPromoCode({
+        code: this.promoForm.code!.toUpperCase(),
+        discountType: this.promoForm.discountType || 'percent',
+        discountValue: this.promoForm.discountValue!,
+        active: this.promoForm.active ?? true,
+      });
+    }
+    this.showPromoModal = false;
+  }
+
+  deletePromo(id: number): void { if (confirm('Delete promo code?')) this.auth.deletePromoCode(id); }
+  togglePromo(id: number, active: boolean): void { this.auth.updatePromoCode(id, { active }); }
+
+  // ── Banners ───────────────────────────────────────
+  get banners() { return this.auth.banners(); }
+
+  openAddBanner(): void { this.editingBanner = null; this.bannerForm = { active: true }; this.showBannerModal = true; }
+  openEditBanner(b: IBanner): void { this.editingBanner = b; this.bannerForm = { ...b }; this.showBannerModal = true; }
+
+  saveBanner(): void {
+    if (!this.bannerForm.imageUrl || !this.bannerForm.title) return;
+    if (this.editingBanner) {
+      this.auth.updateBanner(this.editingBanner.id, this.bannerForm);
+    } else {
+      this.auth.addBanner({
+        imageUrl: this.bannerForm.imageUrl!,
+        title: this.bannerForm.title!,
+        subtitle: this.bannerForm.subtitle || '',
+        active: this.bannerForm.active ?? true,
+      });
+    }
+    this.showBannerModal = false;
+  }
+
+  deleteBanner(id: number): void { if (confirm('Delete banner?')) this.auth.deleteBanner(id); }
+  toggleBanner(id: number, active: boolean): void { this.auth.updateBanner(id, { active }); }
+
+  // ── Stats ─────────────────────────────────────────
   get stats() {
     return {
       totalProducts: this.products.length,
       totalOrders: this.orders.length,
       totalRevenue: this.orders.reduce((s, o) => s + o.total, 0),
       lowStock: this.products.filter(p => p.quantity <= 2).length,
+      totalUsers: this.users.filter(u => u.role === 'user').length,
+      restrictedUsers: this.users.filter(u => u.status === 'restricted').length,
     };
   }
+
+  logout(): void { this.auth.logout(); }
 }

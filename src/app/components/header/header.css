@@ -315,3 +315,119 @@
 }
 .user-dropdown a:hover,
 .user-dropdown button:hover { background: #faf7f4; }
+
+/* ══════════════════════════════════════════════
+   DARK THEME — header & global overrides
+   ══════════════════════════════════════════════ */
+
+/* Theme toggle button */
+.theme-toggle {
+  font-size: 15px;
+  transition: color 0.25s, transform 0.3s;
+}
+.theme-toggle:hover { transform: rotate(20deg); }
+
+/* Dark header bar */
+.hdr.dark {
+  background: #0f0d0c;
+  border-bottom: 1px solid rgba(184,150,90,0.18);
+}
+.hdr.dark .brand,
+.hdr.dark .lnk,
+.hdr.dark .icon-btn  { color: #e8ddd4; }
+.hdr.dark .lnk::after { background: var(--warm); }
+.hdr.dark .bag-dot   { background: var(--warm); color: #0f0d0c; }
+.hdr.dark .cta-btn   { background: var(--warm); color: #0f0d0c; }
+.hdr.dark .cta-btn:hover { background: #e8ddd4; }
+.hdr.dark .user-avatar { background: var(--warm); color: #0f0d0c; }
+.hdr.dark .toggle span { background: #e8ddd4; }
+
+/* Dark mobile drawer */
+.drawer.dark {
+  background: #0f0d0c;
+  border-bottom-color: rgba(184,150,90,0.18);
+}
+.drawer.dark .lnk { color: #e8ddd4; }
+
+/* ── Global dark theme (applied to <html>) ── */
+:root.dark-theme {
+  --bg:    #0f0d0c;
+  --ink:   #e8ddd4;
+  --muted: #9e9088;
+  --warm:  #c9a96e;
+}
+
+:root.dark-theme body {
+  background: #0f0d0c;
+  color: #e8ddd4;
+}
+
+/* Cards & sections */
+:root.dark-theme .card,
+:root.dark-theme .profile-card,
+:root.dark-theme .profile-sidebar,
+:root.dark-theme .filter-bar,
+:root.dark-theme .user-dropdown,
+:root.dark-theme .featured-card {
+  background: #1a1614 !important;
+  border-color: rgba(184,150,90,0.18) !important;
+  color: #e8ddd4 !important;
+}
+
+:root.dark-theme .card-title,
+:root.dark-theme .card-text,
+:root.dark-theme .fc-name,
+:root.dark-theme .profile-name,
+:root.dark-theme .profile-email {
+  color: #e8ddd4 !important;
+}
+
+/* Inputs */
+:root.dark-theme input,
+:root.dark-theme textarea,
+:root.dark-theme select {
+  background: #261f1c !important;
+  border-color: rgba(184,150,90,0.25) !important;
+  color: #e8ddd4 !important;
+}
+:root.dark-theme input::placeholder,
+:root.dark-theme textarea::placeholder { color: #6e6058 !important; }
+
+/* Buttons */
+:root.dark-theme .btn-save,
+:root.dark-theme .addtocart,
+:root.dark-theme .flaura-view-cart-btn {
+  background: #c9a96e !important;
+  color: #0f0d0c !important;
+}
+
+/* Master products section */
+:root.dark-theme .flaura-category-section,
+:root.dark-theme .filter-bar-section > .container,
+:root.dark-theme section.py-4 {
+  background: transparent;
+}
+:root.dark-theme .flaura-category-tab {
+  background: #1a1614;
+  border-color: rgba(184,150,90,0.2);
+  color: #e8ddd4;
+}
+:root.dark-theme .flaura-category-tab.active {
+  background: #c9a96e;
+  color: #0f0d0c;
+}
+:root.dark-theme .flaura-floating-cart {
+  background: #1a1614 !important;
+  border-color: rgba(184,150,90,0.2) !important;
+  color: #e8ddd4 !important;
+}
+
+/* Banner overlay already dark — looks fine in both modes */
+
+/* Dropdown menu in dark */
+:root.dark-theme .user-dropdown { background: #1a1614; border-color: rgba(184,150,90,0.2); }
+:root.dark-theme .user-dropdown-name,
+:root.dark-theme .user-dropdown a,
+:root.dark-theme .user-dropdown button { color: #e8ddd4 !important; }
+:root.dark-theme .user-dropdown a:hover,
+:root.dark-theme .user-dropdown button:hover { background: #261f1c !important; }

@@ -16,6 +16,7 @@ import { OrderConfirmation } from './components/order-confirmation/order-confirm
 import { AdminDashboard } from './components/admin-dashboard/admin-dashboard';
 import { Wishlist } from './components/wishlist/wishlist';
 import { OrderHistory } from './components/order-history/order-history';
+import { Profile } from './components/profile/profile';
 
 export const routes: Routes = [
   { path: '', component: MasterProducts },
@@ -39,6 +40,7 @@ export const routes: Routes = [
   // User
   { path: 'wishlist', component: Wishlist },
   { path: 'order-history', component: OrderHistory },
+  { path: 'profile', component: Profile },
 
   // Admin
   { path: 'admin', component: AdminDashboard },

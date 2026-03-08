@@ -568,3 +568,33 @@
     font-size: 52px;
   }
 }
+/* ── Sign-in required notice ── */
+.signin-notice {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #fff8ee;
+  border: 1.5px solid #f0c97a;
+  border-radius: 10px;
+  padding: 12px 16px;
+  margin-bottom: 12px;
+  font-size: 14px;
+  color: #7a5a1a;
+}
+.signin-notice i {
+  font-size: 18px;
+  color: #b8965a;
+  flex-shrink: 0;
+}
+.signin-notice a {
+  color: #b8965a;
+  font-weight: 700;
+  text-decoration: underline;
+}
+.signin-notice a:hover { color: #8a6c30; }
+
+:root.dark-theme .signin-notice {
+  background: #261f0e;
+  border-color: rgba(184,150,90,0.35);
+  color: #c9a96e;
+}

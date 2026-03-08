@@ -14,9 +14,8 @@ import { AuthService } from '../../services/auth.service';
 })
 export class Checkout implements OnInit {
   cartItems: ICartItem[] = [];
-  step = 1; // 1=Info, 2=Payment, 3=Review
+  step = 1;
 
-  // Guest/User info
   isGuest = false;
   firstName = '';
   lastName = '';
@@ -26,7 +25,6 @@ export class Checkout implements OnInit {
   city = '';
   governorate = '';
 
-  // Payment
   paymentMethod = 'credit';
   cardNumber = '';
   cardName = '';
@@ -35,6 +33,7 @@ export class Checkout implements OnInit {
   promoCode = '';
   promoApplied = false;
   promoDiscount = 0;
+  promoError = '';
 
   constructor(
     private cartService: CartService,
@@ -43,12 +42,17 @@ export class Checkout implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    if (!this.auth.isLoggedIn()) {
+      this.router.navigate(['/login'], { queryParams: { returnUrl: '/checkout' } });
+      return;
+    }
     this.cartItems = this.cartService.getCartItems();
     const user = this.auth.currentUser();
     if (user) {
       this.email = user.email;
       this.firstName = user.name.split(' ')[0];
       this.lastName = user.name.split(' ').slice(1).join(' ');
+      if (user.address) this.address = user.address;
     }
     if (this.cartItems.length === 0) this.router.navigate(['/cart']);
   }
@@ -59,27 +63,25 @@ export class Checkout implements OnInit {
   get total(): number { return this.subtotal + this.shipping - this.discount; }
 
   applyPromo(): void {
-    if (this.promoCode.toUpperCase() === 'ROSELLE10') {
-      this.promoDiscount = Math.round(this.subtotal * 0.10);
+    const promo = this.auth.validatePromoCode(this.promoCode);
+    if (promo) {
+      this.promoDiscount = promo.discountType === 'percent'
+        ? Math.round(this.subtotal * promo.discountValue / 100)
+        : promo.discountValue;
       this.promoApplied = true;
-    } else if (this.promoCode.toUpperCase() === 'VIP20') {
-      this.promoDiscount = Math.round(this.subtotal * 0.20);
-      this.promoApplied = true;
+      this.promoError = '';
     } else {
       this.promoApplied = false;
       this.promoDiscount = 0;
-      alert('Invalid promo code. Try ROSELLE10 or VIP20');
+      this.promoError = 'Invalid or inactive promo code.';
     }
   }
 
-  nextStep(): void {
-    if (this.step < 3) this.step++;
-  }
-  prevStep(): void {
-    if (this.step > 1) this.step--;
-  }
+  nextStep(): void { if (this.step < 3) this.step++; }
+  prevStep(): void { if (this.step > 1) this.step--; }
 
   placeOrder(): void {
+    if (this.promoApplied) this.auth.usePromoCode(this.promoCode);
     const order = this.auth.placeOrder({
       items: this.cartItems,
       subtotal: this.subtotal,

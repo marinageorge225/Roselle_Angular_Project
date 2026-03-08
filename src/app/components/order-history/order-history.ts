@@ -19,7 +19,7 @@ export class OrderHistory implements OnInit {
   constructor(private auth: AuthService) {}
 
   ngOnInit(): void {
-    this.orders = this.auth.orders();
+    this.orders = this.auth.orders;
   }
 
   toggle(id: string): void {
