@@ -1,3 +1,4 @@
+import { HttpClient } from '@angular/common/http';
 import { Injectable, signal } from '@angular/core';
 import { Router } from '@angular/router';
 
@@ -82,7 +83,7 @@ export class AuthService {
   banners = this._banners.asReadonly();
   featuredProductIds = this._featuredProductIds.asReadonly();
 
-  constructor(private router: Router) {}
+  constructor(private router: Router,private http: HttpClient) {}
 
   get wishlist(): number[] {
     const uid = this._currentUser()?.id;
@@ -140,25 +141,31 @@ export class AuthService {
     return 'success';
   }
 
-  register(name: string, email: string, password: string): 'exists' | 'otp_sent' {
-    if (this.users.find(u => u.email === email)) return 'exists';
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    this._pendingOtp.set(otp);
-    this._pendingEmail.set(email);
-    this.users.push({ id: this.users.length + 1, name, email, role: 'user', verified: false, status: 'active' });
-    console.log(`OTP for ${email}: ${otp}`);
-    return 'otp_sent';
+  
+
+  apiUrl = "http://localhost:3000/api";
+  register(data:{email:string,phone:string,name:string,password:string}){
+    return this.http.post(`${this.apiUrl}/user/signup`,data);
   }
 
-  verifyOtp(otp: string): boolean {
-    if (otp === this._pendingOtp()) {
-      const user = this.users.find(u => u.email === this._pendingEmail());
-      if (user) { user.verified = true; this._currentUser.set({ ...user }); }
-      this._pendingOtp.set('');
-      return true;
-    }
-    return false;
+
+  signup_google(idToken:any){
+  return this.http.post(`${this.apiUrl}/user/signup_bygoogle`, {
+    idToken: idToken
+  });
+}
+
+
+  verifyOtp(otp: string) {
+     return this.http.post(`${this.apiUrl}/user/verify_account`,{otp,emil:this._pendingEmail()});
   }
+
+  resendotp(){
+    return this.http.post(`${this.apiUrl}/user/resend_otp`,{emil:this._pendingEmail()});
+  }
+
+
+
 
   sendPasswordReset(email: string): boolean {
     const user = this.users.find(u => u.email === email);
@@ -172,7 +179,7 @@ export class AuthService {
 
   logout(): void {
     this._currentUser.set(null);
-    this.router.navigate(['/login']);
+    //this.router.navigate(['/login']);
   }
 
   isLoggedIn(): boolean { return this._currentUser() !== null; }

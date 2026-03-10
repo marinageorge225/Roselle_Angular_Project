@@ -70,28 +70,50 @@ export class OtpVerify implements OnInit, OnDestroy {
   get otpValue(): string { return this.digits.join(''); }
 
   verify(): void {
-    if (this.otpValue.length < 6) {
-      this.errorMessage = 'Please enter all 6 digits.';
-      return;
-    }
-    this.isLoading = true;
-    this.errorMessage = '';
-    setTimeout(() => {
-      const ok = this.auth.verifyOtp(this.otpValue);
+  if (this.otpValue.length < 6) {
+    this.errorMessage = 'Please enter all 6 digits.';
+    return;
+  }
+
+  this.isLoading = true;
+  this.errorMessage = '';
+
+  this.auth.verifyOtp(this.otpValue).subscribe({
+    next: (res: any) => {
       this.isLoading = false;
-      if (ok) {
+
+      if (res.status === 'success') {
         this.router.navigate(['/login']);
       } else {
-        this.errorMessage = 'Invalid code. Please try again.';
+        this.errorMessage = res.message || 'Invalid code. Please try again.';
         this.digits = ['', '', '', '', '', ''];
       }
-    }, 800);
-  }
+    },
+    error: (err) => {
+      this.isLoading = false;
+      this.errorMessage = err.error?.message || 'Something went wrong';
+      this.digits = ['', '', '', '', '', ''];
+    }
+  });
+}
 
   resend(): void {
     if (!this.canResend) return;
     // Re-trigger OTP (in real app would call backend)
-    console.log('Resending OTP...');
-    this.startTimer();
+    this.auth.resendotp().subscribe({
+      next: (res: any) => {
+      this.isLoading = false;
+      if (res.status === 'success') {
+        console.log(res)
+      } else {
+        this.errorMessage = res.message || 'Invalid code. Please try again.';
+        this.digits = ['', '', '', '', '', ''];
+      }
+    },
+    error: (err) => {
+      this.isLoading = false;
+      this.errorMessage = err.error?.message || 'Something went wrong';
+    }
+    })
   }
 }
