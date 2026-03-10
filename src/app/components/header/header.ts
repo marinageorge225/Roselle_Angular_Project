@@ -11,7 +11,7 @@ import { CartService } from '../../services/cart-service';
   templateUrl: './header.html',
   styleUrls: ['./header.css'],
 })
-export class Header {
+export class Header  {
   isScrolled = false;
   menuOpen = false;
   userMenuOpen = false;
@@ -22,7 +22,9 @@ export class Header {
     private cart: CartService,
     private router: Router
   ) {}
-
+ngOnInit() {
+    this.auth.initAuth(); 
+  }
   @HostListener('window:scroll')
   onScroll(): void { this.isScrolled = window.scrollY > 10; }
 
@@ -47,7 +49,21 @@ export class Header {
   get wishlistCount(): number { return this.auth.wishlistCount; }
 
   logout(): void {
-    this.auth.logout();
+  this.auth.logout().subscribe({
+  next: (res:any) => {
+    if (res.success) {
+      console.log("Logout successful");
+      this.router.navigateByUrl('/login');
+    }
+    else{
+      console.error("Logout failed");
+    }
+
+  },
+  error: (err) => {
+    console.error("Logout failed", err);
+  }
+});
     this.userMenuOpen = false;
   }
 }

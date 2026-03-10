@@ -53,18 +53,17 @@ export class Signup {
   this.auth.register(data).subscribe({
     next: (res: any) => {
       console.log('Success:', res);
-      this.isLoading = false;
       if(res.status=="fail"){
         this.errorMessage = res.message;
       }
       else{
+        this.auth.setPendingEmail(this.email); 
         this.router.navigateByUrl('verify-otp')
       }
     },
     error: (err) => {
       console.error('Error:', err);
       this.errorMessage = err.error?.message || 'Something went wrong';
-      this.isLoading = false;
     }
   });
  }

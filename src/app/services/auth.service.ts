@@ -50,8 +50,8 @@ export interface IBanner {
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
-  private _currentUser = signal<IUser | null>(null);
-  private _pendingEmail = signal<string>('');
+  public _currentUser = signal<IUser | null>(null);
+  private _pendingEmail = signal<string>('');  // ✅ KEEP ONLY THIS ONE
   private _pendingOtp = signal<string>('');
 
   private _userOrders = signal<{ [userId: number]: IOrder[] }>({});
@@ -62,7 +62,7 @@ export class AuthService {
     { id: 2, code: 'SAVE200', discountType: 'fixed', discountValue: 200, active: true, usageCount: 0 },
     { id: 3, code: 'VIP20', discountType: 'percent', discountValue: 20, active: false, usageCount: 5 },
   ]);
-
+ 
   private _banners = signal<IBanner[]>([
     { id: 1, imageUrl: 'assets/images/slider11.jpg', title: 'New Arrivals', subtitle: 'Discover the latest luxury pieces', active: true },
     { id: 2, imageUrl: 'assets/images/slider22.jpg', title: 'Exclusive Collection', subtitle: 'Timeless elegance awaits', active: true },
@@ -78,12 +78,81 @@ export class AuthService {
   ];
 
   currentUser = this._currentUser.asReadonly();
-  pendingEmail = this._pendingEmail.asReadonly();
   promoCodes = this._promoCodes.asReadonly();
   banners = this._banners.asReadonly();
   featuredProductIds = this._featuredProductIds.asReadonly();
+  apiUrl = 'http://localhost:3000/api';
 
-  constructor(private router: Router,private http: HttpClient) {}
+  constructor(private router: Router, private http: HttpClient) {}
+
+  // ✅ Use signal's .set() method
+  setPendingEmail(email: string): void {
+    this._pendingEmail.set(email);
+    sessionStorage.setItem('pendingEmail', email);
+  }
+
+  // ✅ Use signal's () call to read
+  pendingEmail(): string {
+    return this._pendingEmail();
+  }
+ setCurrentUser(user: any): void {
+  this._currentUser.set(user);
+}
+
+  register(data: { email: string; phone: string; name: string; password: string }) {
+    return this.http.post(`${this.apiUrl}/user/signup`, data);
+  }
+
+  signup_google(idToken: any) {
+    return this.http.post(`${this.apiUrl}/user/signup_bygoogle`, { idToken });
+  }
+
+  verifyOtp(otp: string) {
+    const email = this._pendingEmail();
+    if (!email) throw new Error('No pending email found');
+    return this.http.post(`${this.apiUrl}/user/verify_account`, { otp, email });
+  }
+
+  resendotp() {
+    const e =this._pendingEmail();
+    if (!e) throw new Error('No pending email found');
+    return this.http.post(`${this.apiUrl}/user/resend_otp`, { email: e });
+  }
+
+logout() {  return this.http.get(`${this.apiUrl}/user/logout`) }
+
+login(email: string, password: string) {
+    return this.http.post(`${this.apiUrl}/user/login`,{email,password})
+  }
+
+  // ✅ Uses signal .set() consistently
+  sendPasswordReset(email: string): boolean {
+    const user = this.users.find(u => u.email === email);
+    if (!user) return false;
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    this._pendingOtp.set(otp);
+    this._pendingEmail.set(email);
+    console.log(`Password reset OTP for ${email}: ${otp}`);
+    return true;
+  }
+
+
+  getMe() {
+  return this.http.get<any>(`${this.apiUrl}/user/myprofile`);
+}
+
+initAuth() {
+  this.getMe().subscribe({
+    next: (res) => {
+      if (res.status === 'success') {
+        this._currentUser.set(res.user); 
+      }
+    },
+    error: () => {
+      this._currentUser.set(null); 
+    }
+  });
+}
 
   get wishlist(): number[] {
     const uid = this._currentUser()?.id;
@@ -110,8 +179,7 @@ export class AuthService {
   }
 
   get allOrders(): IOrder[] {
-    const all = this._userOrders();
-    return Object.values(all).flat();
+    return Object.values(this._userOrders()).flat();
   }
 
   placeOrder(order: Omit<IOrder, 'id' | 'date' | 'status' | 'userId'>): IOrder {
@@ -130,60 +198,11 @@ export class AuthService {
     return newOrder;
   }
 
-  login(email: string, password: string, asAdmin: boolean): 'success' | 'not_found' | 'wrong_pass' | 'need_verify' | 'restricted' {
-    const user = this.users.find(u => u.email === email);
-    if (!user) return 'not_found';
-    if (password !== 'password123') return 'wrong_pass';
-    if (!user.verified) return 'need_verify';
-    if (asAdmin && user.role !== 'admin') return 'wrong_pass';
-    if (user.status === 'restricted') return 'restricted';
-    this._currentUser.set({ ...user });
-    return 'success';
-  }
-
   
 
-  apiUrl = "http://localhost:3000/api";
-  register(data:{email:string,phone:string,name:string,password:string}){
-    return this.http.post(`${this.apiUrl}/user/signup`,data);
-  }
-
-
-  signup_google(idToken:any){
-  return this.http.post(`${this.apiUrl}/user/signup_bygoogle`, {
-    idToken: idToken
-  });
-}
-
-
-  verifyOtp(otp: string) {
-     return this.http.post(`${this.apiUrl}/user/verify_account`,{otp,emil:this._pendingEmail()});
-  }
-
-  resendotp(){
-    return this.http.post(`${this.apiUrl}/user/resend_otp`,{emil:this._pendingEmail()});
-  }
-
-
-
-
-  sendPasswordReset(email: string): boolean {
-    const user = this.users.find(u => u.email === email);
-    if (!user) return false;
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    this._pendingOtp.set(otp);
-    this._pendingEmail.set(email);
-    console.log(`Password reset OTP for ${email}: ${otp}`);
-    return true;
-  }
-
-  logout(): void {
-    this._currentUser.set(null);
-    //this.router.navigate(['/login']);
-  }
-
+  
   isLoggedIn(): boolean { return this._currentUser() !== null; }
-  isAdmin(): boolean { return this._currentUser()?.role === 'admin'; }
+isAdmin(): boolean { return this._currentUser()?.role === 'admin'; }
 
   updateProfile(data: { name?: string; phone?: string; address?: string; paymentDetails?: IUser['paymentDetails'] }): void {
     const user = this.users.find(u => u.id === this._currentUser()?.id);

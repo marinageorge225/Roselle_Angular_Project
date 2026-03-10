@@ -97,16 +97,20 @@ export class OtpVerify implements OnInit, OnDestroy {
   });
 }
 
-  resend(): void {
-    if (!this.canResend) return;
-    // Re-trigger OTP (in real app would call backend)
-    this.auth.resendotp().subscribe({
-      next: (res: any) => {
+ resend(): void {
+  if (!this.canResend) return;
+
+
+  this.isLoading = true;
+  this.errorMessage = '';
+  this.auth.resendotp().subscribe({
+    next: (res: any) => {
       this.isLoading = false;
       if (res.status === 'success') {
-        console.log(res)
+        console.log('OTP resent successfully', res);
+        this.startTimer();
       } else {
-        this.errorMessage = res.message || 'Invalid code. Please try again.';
+        this.errorMessage = res.message || 'Something went wrong';
         this.digits = ['', '', '', '', '', ''];
       }
     },
@@ -114,6 +118,6 @@ export class OtpVerify implements OnInit, OnDestroy {
       this.isLoading = false;
       this.errorMessage = err.error?.message || 'Something went wrong';
     }
-    })
-  }
+  });
+}
 }

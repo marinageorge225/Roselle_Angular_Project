@@ -29,7 +29,7 @@
       />
     </div>
 
-    <button class="btn-submit" (click)="verify()" [disabled]="isLoading || otpValue.length < 6">
+    <button class="btn-submit" (click)="verify()" [disabled]="otpValue.length < 6">
       <span *ngIf="!isLoading">Verify & Continue</span>
       <span *ngIf="isLoading" class="spinner"></span>
     </button>

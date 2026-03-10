@@ -27,6 +27,8 @@ export class Login implements OnInit {
   ) {}
 
   ngOnInit(): void {
+
+
     // Pick up ?returnUrl=/checkout so we can redirect after login
     this.returnUrl = this.route.snapshot.queryParamMap.get('returnUrl') ?? '/Master';
   }
@@ -37,28 +39,30 @@ export class Login implements OnInit {
   }
 
   onSubmit(): void {
-    if (!this.email || !this.password) {
-      this.errorMessage = 'Please fill in all fields.';
-      return;
-    }
-    this.isLoading = true;
-    this.errorMessage = '';
-
-    setTimeout(() => {
-      const result = this.auth.login(this.email, this.password, this.isAdmin);
-      this.isLoading = false;
-      if (result === 'success') {
-        // Admin always goes to dashboard; users go to returnUrl (e.g. /checkout)
-        this.router.navigateByUrl(this.isAdmin ? '/admin' : this.returnUrl);
-      } else if (result === 'not_found') {
-        this.errorMessage = 'No account found with this email.';
-      } else if (result === 'wrong_pass') {
-        this.errorMessage = this.isAdmin ? 'Invalid credentials or insufficient permissions.' : 'Incorrect password.';
-      } else if (result === 'need_verify') {
-        this.errorMessage = 'Please verify your email first.';
-      } else if (result === 'restricted') {
-        this.errorMessage = 'Your account has been restricted. Please contact support.';
-      }
-    }, 800);
+  if (!this.email || !this.password) {
+    this.errorMessage = 'Please fill in all fields.';
+    return;
   }
+
+  this.isLoading = true;
+  this.errorMessage = '';
+
+  this.auth.login(this.email, this.password).subscribe({
+    next: (res: any) => {
+      this.auth.setCurrentUser(res.user);
+      this.isLoading = false;
+      if (res.status=='success') {
+        this.router.navigateByUrl('/');
+      } else {
+        this.errorMessage = res.message || 'Login failed';
+      }
+    },
+    error: (err) => {
+      this.isLoading = false;
+      this.errorMessage = err.error?.message || 'Login failed';
+    }
+  });
+}
+  
+  
 }
