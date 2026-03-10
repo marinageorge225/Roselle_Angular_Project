@@ -51,7 +51,7 @@ ngOnInit() {
   logout(): void {
   this.auth.logout().subscribe({
   next: (res:any) => {
-    if (res.success) {
+   if (res.status === 'success') {
       console.log("Logout successful");
       this.router.navigateByUrl('/login');
     }
