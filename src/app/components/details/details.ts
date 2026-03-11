@@ -1,97 +1,21 @@
-// import { Component, OnInit } from '@angular/core';
-// import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-// import { StaticProducts } from '../../services/static-products';
+import { Subscription } from 'rxjs';
 
-// import { IProduct } from '../../models/iproduct';
-// import { CommonModule, CurrencyPipe, Location } from '@angular/common';
-// import { CartService } from '../../services/cart-service';
-
-// @Component({
-//   selector: 'app-details',
-//   standalone: true,
-//   imports: [CurrencyPipe, CommonModule, RouterLink],
-//   templateUrl: './details.html',
-//   styleUrl: './details.css',
-// })
-// export class Details implements OnInit {
-//   currentId: number = 0;
-//   product: IProduct | null = null;
-//   addedToCart: boolean = false; // for button feedback
-//   idsArr:number[];
-//   currentIdIndex:number=0;
-
-//   constructor(
-//     private _activatedRoute: ActivatedRoute,
-//     private _detailsService: StaticProducts,
-//     private _cartService: CartService,
-//     private _location: Location,
-//     private _router:Router
-//   ) {
-//     this.idsArr=this._detailsService.mapProductsToId();
-
-//   }
-
-//   ngOnInit(): void {
-//     // this.currentId = Number(this._activatedRoute.snapshot.paramMap.get('id'));
-
-//     // this.product = this._detailsService.getProductById(this.currentId);
-
-//     // sync button state if already in cart
-//     //paramMap mn no3 Observable => ay haga hatt8er haysma3 feh w dh hysa3edne a listen lw dost next aw previous mn 8er ma a3ml refresh
-//     //kol ma al params aly fl url tt8ayr zay l id hwa hy subscribe w ysm3 l ta8er dh
-//     this._activatedRoute.paramMap.subscribe((paramMap)=>{
-//       this.currentId = Number(paramMap.get('id'));
-//       this.product = this._detailsService.getProductById(this.currentId);
-//     });
-//     if (this.product) {
-//       this.addedToCart = this._cartService.isInCart(this.product.id);
-//     }
-//   }
-
-//   addToCart(): void {
-//     if (this.product && this.product.quantity > 0) {
-//       this._cartService.addToCart(this.product);
-//       this.addedToCart = true;
-//     }
-//   }
-
-//   goBack(): void {
-//     this._location.back();
-//   }
-
-//   get cartCount(): number {
-//     return this._cartService.getCartCount();
-//   }
-
-//   goNext() {
-//   this.currentIdIndex = this.idsArr.findIndex((id) => id == this.currentId);
-//   if(this.currentIdIndex  != this.idsArr.length-1){
-//     this._router.navigateByUrl(`/Details/${this.idsArr[this.currentIdIndex + 1]}`);
-// }
-// }
-//   goPrevious(){
-//   this.currentIdIndex = this.idsArr.findIndex((id) => id == this.currentId);
-//   if(this.currentIdIndex !=0){
-//     this._router.navigateByUrl(`/Details/${this.idsArr[this.currentIdIndex - 1]}`);
-
-//   }
-
-//   }
-
-// }
-import { Component, OnInit, OnDestroy } from '@angular/core';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { CommonModule, CurrencyPipe, Location } from '@angular/common';
+import { Component, OnDestroy, OnInit } from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+
+import { IProduct } from '../../models/iproduct';
+import { AuthService } from '../../services/auth.service';
 import { CartService } from '../../services/cart-service';
 import { ProductService } from '../../services/product.service';
+import { IReview, RatingService } from '../../services/rating-service';
 import { StaticProducts } from '../../services/static-products';
-import { IProduct } from '../../models/iproduct';
-import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-details',
   standalone: true,
-  imports: [CurrencyPipe, CommonModule, RouterLink],
+  imports: [CurrencyPipe, CommonModule, RouterLink, FormsModule],
   templateUrl: './details.html',
   styleUrls: ['./details.css'],
 })
@@ -104,6 +28,29 @@ export class Details implements OnInit, OnDestroy {
   idsArr: string[] = [];
   currentIdIndex: number = 0;
 
+  // Reviews list
+  reviews: IReview[] = [];
+  reviewsLoading: boolean = false;
+
+  // Submit new review
+  ratingValue: number = 0;
+  ratingComment: string = '';
+  ratingSubmitting: boolean = false;
+  ratingSuccess: string = '';
+  ratingError: string = '';
+  hoveredStar: number = 0;
+
+  // Edit mode
+  editingReviewId: string | null = null;
+  editRatingValue: number = 0;
+  editComment: string = '';
+  editHoveredStar: number = 0;
+  editSubmitting: boolean = false;
+  editError: string = '';
+
+  // Delete confirm
+  deletingReviewId: string | null = null;
+
   private _routeSub!: Subscription;
   private _idsSub!: Subscription;
 
@@ -114,37 +61,32 @@ export class Details implements OnInit, OnDestroy {
     private cartService: CartService,
     private location: Location,
     private router: Router,
+    private ratingService: RatingService,
+    private auth: AuthService,
   ) {}
 
   ngOnInit(): void {
-    // Keep idsArr synced with the full product list so Next/Previous always work
     this._idsSub = this.prdService.products$.subscribe((products) => {
       this.idsArr = products.map((p) => p._id);
-      // Recalculate index whenever the list updates
       this.currentIdIndex = this.idsArr.findIndex((id) => id === this.currentId);
     });
 
     this._routeSub = this.route.paramMap.subscribe((params) => {
       const id = params.get('id');
-
       if (!id) {
         this.loading = false;
         return;
       }
-
       this.currentId = id;
       this.currentIdIndex = this.idsArr.findIndex((id) => id === this.currentId);
       this.loading = true;
       this.product = null;
+      this.resetRating();
 
       this.productService.getProductById(id).subscribe({
         next: (res) => {
           const p = res.data.product;
-          this.product = {
-            ...p,
-            imgUrl: p.image,
-            quantity: p.stock,
-          };
+          this.product = { ...p, imgUrl: p.image, quantity: p.stock };
           this.addedToCart = this.cartService.isInCart(this.product._id);
           this.loading = false;
         },
@@ -153,6 +95,8 @@ export class Details implements OnInit, OnDestroy {
           this.loading = false;
         },
       });
+
+      this.loadReviews(id);
     });
   }
 
@@ -161,6 +105,173 @@ export class Details implements OnInit, OnDestroy {
     this._idsSub?.unsubscribe();
   }
 
+  // ── Helpers ────────────────────────────────────────
+  get isLoggedIn(): boolean {
+    return this.auth.isLoggedIn();
+  }
+
+  get currentUserId(): string {
+    const u = this.auth.currentUser();
+    return u?._id ?? String(u?.id ?? '');
+  }
+
+  isOwnReview(review: IReview): boolean {
+    return review.userId?._id === this.currentUserId;
+  }
+
+  getStarArray(): number[] {
+    return [1, 2, 3, 4, 5];
+  }
+
+  // ── Load reviews ───────────────────────────────────
+  loadReviews(productId: string): void {
+    this.reviewsLoading = true;
+    this.ratingService.getProductRatings(productId).subscribe({
+      next: (res) => {
+        this.reviews = res.data.product.ratings;
+        this.reviewsLoading = false;
+      },
+      error: () => {
+        this.reviews = [];
+        this.reviewsLoading = false;
+      },
+    });
+  }
+
+  // ── Submit new review ──────────────────────────────
+  setRating(star: number): void {
+    this.ratingValue = star;
+  }
+  hoverStar(star: number): void {
+    this.hoveredStar = star;
+  }
+  clearHover(): void {
+    this.hoveredStar = 0;
+  }
+
+  getStarClass(star: number, hovered: number, selected: number): string {
+    return star <= (hovered || selected) ? 'star active' : 'star';
+  }
+
+  resetRating(): void {
+    this.ratingValue = 0;
+    this.ratingComment = '';
+    this.ratingSuccess = '';
+    this.ratingError = '';
+    this.hoveredStar = 0;
+  }
+
+  submitRating(): void {
+    if (!this.ratingValue) {
+      this.ratingError = 'Please select a star rating.';
+      return;
+    }
+    if (!this.ratingComment.trim()) {
+      this.ratingError = 'Please write a comment.';
+      return;
+    }
+    this.ratingSubmitting = true;
+    this.ratingError = '';
+
+    this.ratingService
+      .submitRating(this.currentId, {
+        rating: this.ratingValue,
+        comment: this.ratingComment.trim(),
+      })
+      .subscribe({
+        next: () => {
+          this.ratingSubmitting = false;
+          this.ratingSuccess = 'Thank you for your review!';
+          this.resetRating();
+          this.ratingSuccess = 'Thank you for your review!';
+          this.loadReviews(this.currentId);
+        },
+        error: (err) => {
+          this.ratingSubmitting = false;
+          this.ratingError = err.error?.message ?? 'Could not submit review.';
+        },
+      });
+  }
+
+  // ── Edit review ────────────────────────────────────
+  startEdit(review: IReview): void {
+    this.editingReviewId = review._id;
+    this.editRatingValue = review.rating;
+    this.editComment = review.comment;
+    this.editHoveredStar = 0;
+    this.editError = '';
+  }
+
+  cancelEdit(): void {
+    this.editingReviewId = null;
+    this.editError = '';
+  }
+
+  setEditRating(star: number): void {
+    this.editRatingValue = star;
+  }
+  hoverEditStar(star: number): void {
+    this.editHoveredStar = star;
+  }
+  clearEditHover(): void {
+    this.editHoveredStar = 0;
+  }
+
+  saveEdit(): void {
+    if (!this.editRatingValue) {
+      this.editError = 'Please select a rating.';
+      return;
+    }
+    if (!this.editComment.trim()) {
+      this.editError = 'Please write a comment.';
+      return;
+    }
+    if (!this.editingReviewId) return;
+
+    this.editSubmitting = true;
+    this.editError = '';
+
+    this.ratingService
+      .updateRating(this.editingReviewId, {
+        rating: this.editRatingValue,
+        comment: this.editComment.trim(),
+      })
+      .subscribe({
+        next: () => {
+          this.editSubmitting = false;
+          this.editingReviewId = null;
+          this.loadReviews(this.currentId);
+        },
+        error: (err) => {
+          this.editSubmitting = false;
+          this.editError = err.error?.message ?? 'Could not update review.';
+        },
+      });
+  }
+
+  // ── Delete review ──────────────────────────────────
+  confirmDelete(reviewId: string): void {
+    this.deletingReviewId = reviewId;
+  }
+  cancelDelete(): void {
+    this.deletingReviewId = null;
+  }
+
+  deleteReview(): void {
+    if (!this.deletingReviewId) return;
+    this.ratingService.deleteRating(this.deletingReviewId).subscribe({
+      next: () => {
+        this.deletingReviewId = null;
+        this.loadReviews(this.currentId);
+      },
+      error: (err) => {
+        this.deletingReviewId = null;
+        console.error('Delete failed:', err);
+      },
+    });
+  }
+
+  // ── Cart / Navigation ──────────────────────────────
   addToCart(): void {
     if (this.product && this.product.quantity > 0) {
       this.cartService.addToCart(this.product);
@@ -174,26 +285,22 @@ export class Details implements OnInit, OnDestroy {
 
   goNext(): void {
     this.currentIdIndex = this.idsArr.findIndex((id) => id === this.currentId);
-    if (this.currentIdIndex !== -1 && this.currentIdIndex < this.idsArr.length - 1) {
+    if (this.currentIdIndex !== -1 && this.currentIdIndex < this.idsArr.length - 1)
       this.router.navigateByUrl(`/Details/${this.idsArr[this.currentIdIndex + 1]}`);
-    }
   }
 
   goPrevious(): void {
     this.currentIdIndex = this.idsArr.findIndex((id) => id === this.currentId);
-    if (this.currentIdIndex > 0) {
+    if (this.currentIdIndex > 0)
       this.router.navigateByUrl(`/Details/${this.idsArr[this.currentIdIndex - 1]}`);
-    }
   }
 
   get isFirst(): boolean {
     return this.currentIdIndex <= 0;
   }
-
   get isLast(): boolean {
     return this.currentIdIndex >= this.idsArr.length - 1;
   }
-
   get cartCount(): number {
     return this.cartService.getCartCount();
   }
