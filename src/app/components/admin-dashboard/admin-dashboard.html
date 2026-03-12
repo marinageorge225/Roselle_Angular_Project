@@ -29,7 +29,7 @@
     </button>
   </aside>
 
-  
+
   <main class="admin-main">
     <div class="admin-topbar">
       <h1>
@@ -43,7 +43,7 @@
       <a routerLink="/Master" class="btn-store"><i class="bi bi-shop"></i> View Store</a>
     </div>
 
-    
+
     <div class="stats-grid">
       <div class="stat-card"><i class="bi bi-box-seam"></i><div><span class="stat-val">{{ stats.totalProducts }}</span><span class="stat-label">Products</span></div></div>
       <div class="stat-card"><i class="bi bi-people"></i><div><span class="stat-val">{{ stats.totalUsers }}</span><span class="stat-label">Users</span></div></div>
@@ -53,7 +53,7 @@
       <div class="stat-card warn"><i class="bi bi-person-x"></i><div><span class="stat-val">{{ stats.restrictedUsers }}</span><span class="stat-label">Restricted</span></div></div>
     </div>
 
-    
+
     <div *ngIf="activeTab==='products'">
       <div class="tab-toolbar">
         <div class="search-wrap"><i class="bi bi-search"></i><input type="text" [(ngModel)]="searchTerm" placeholder="Search products..." /></div>
@@ -90,7 +90,7 @@
       </div>
     </div>
 
-  
+
     <div *ngIf="activeTab==='users'">
       <div class="products-table-wrap">
         <table class="products-table">
@@ -123,7 +123,7 @@
       </div>
     </div>
 
-    
+
     <div *ngIf="activeTab==='orders'">
       <div *ngIf="orders.length === 0" class="empty-state"><i class="bi bi-bag-x"></i><p>No orders yet</p></div>
       <div class="orders-list" *ngIf="orders.length > 0">
@@ -172,9 +172,9 @@
       </div>
     </div>
 
-    
+
     <div *ngIf="activeTab==='content'">
-     
+
       <div class="content-section">
         <div class="tab-toolbar">
           <h3 style="margin:0; font-family:'Cormorant Garamond',serif; font-size:18px;"><i class="bi bi-images"></i> Homepage Banners</h3>
@@ -199,7 +199,7 @@
         </div>
       </div>
 
-      
+
       <div class="content-section" style="margin-top:28px;">
         <div class="tab-toolbar">
           <h3 style="margin:0; font-family:'Cormorant Garamond',serif; font-size:18px;"><i class="bi bi-star"></i> Featured Products on Homepage</h3>
@@ -574,7 +574,16 @@
           <i class="bi bi-plus-lg"></i> Add Promo
         </button>
       </div>
-      <div class="products-table-wrap">
+
+      <div *ngIf="promosLoading" style="text-align: center; padding: 40px; color: var(--muted)">
+        <i
+          class="bi bi-arrow-repeat"
+          style="font-size: 28px; display: block; margin-bottom: 8px"
+        ></i>
+        Loading promo codes...
+      </div>
+
+      <div *ngIf="!promosLoading" class="products-table-wrap">
         <table class="products-table">
           <thead>
             <tr>
@@ -587,38 +596,40 @@
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let p of promoCodes">
+            <tr *ngFor="let p of apiPromos">
               <td>
                 <strong>{{ p.code }}</strong>
               </td>
-              <td>{{ p.discountType === 'percent' ? 'Percentage' : 'Fixed' }}</td>
+              <td>{{ p.discountType === 'percentage' ? 'Percentage' : 'Fixed' }}</td>
               <td>
                 {{
-                  p.discountType === 'percent'
+                  p.discountType === 'percentage'
                     ? p.discountValue + '%'
                     : (p.discountValue | currency: 'EGP' : 'symbol' : '1.0-0')
                 }}
               </td>
               <td>
                 <label class="toggle-switch">
-                  <input
-                    type="checkbox"
-                    [checked]="p.active"
-                    (change)="togglePromo(p.id, !p.active)"
-                  />
+                  <input type="checkbox" [checked]="p.isActive" (change)="togglePromo(p)" />
                   <span class="toggle-slider"></span>
                 </label>
               </td>
-              <td>{{ p.usageCount }}</td>
+              <td>{{ p.usedCount ?? 0 }}</td>
               <td>
                 <div class="action-btns">
                   <button class="btn-edit" (click)="openEditPromo(p)">
                     <i class="bi bi-pencil"></i>
                   </button>
-                  <button class="btn-del" (click)="deletePromo(p.id)">
+                  <button class="btn-del" (click)="deletePromo(p._id)">
                     <i class="bi bi-trash3"></i>
                   </button>
                 </div>
+              </td>
+            </tr>
+            <tr *ngIf="apiPromos.length === 0">
+              <td colspan="6" class="empty-state">
+                <i class="bi bi-tag"></i>
+                <p>No promo codes yet</p>
               </td>
             </tr>
           </tbody>
@@ -795,7 +806,7 @@
         <div class="mfield">
           <label>Discount Type</label>
           <select [(ngModel)]="promoForm.discountType">
-            <option value="percent">Percentage (%)</option>
+            <option value="percentage">Percentage (%)</option>
             <option value="fixed">Fixed Amount (EGP)</option>
           </select>
         </div>
@@ -804,8 +815,18 @@
           <input type="number" [(ngModel)]="promoForm.discountValue" placeholder="10" />
         </div>
       </div>
+      <div class="mrow">
+        <div class="mfield">
+          <label>Max Uses</label>
+          <input type="number" [(ngModel)]="promoForm.maxUses" placeholder="e.g. 100" />
+        </div>
+        <div class="mfield">
+          <label>Expires At</label>
+          <input type="datetime-local" [(ngModel)]="promoForm.expiresAt" />
+        </div>
+      </div>
       <div class="mfield" style="flex-direction: row; align-items: center; gap: 12px">
-        <input type="checkbox" [(ngModel)]="promoForm.active" id="promoActive" />
+        <input type="checkbox" [(ngModel)]="promoForm.isActive" id="promoActive" />
         <label for="promoActive" style="text-transform: none; font-size: 14px; letter-spacing: 0"
           >Active</label
         >
@@ -853,5 +874,42 @@
       <button class="btn-cancel" (click)="showBannerModal = false">Cancel</button>
       <button class="btn-save" (click)="saveBanner()">{{ editingBanner ? 'Save' : 'Add' }}</button>
     </div>
+  </div>
+</div>
+
+<!-- Delete Promo Confirmation Modal -->
+<div class="modal-overlay" *ngIf="pendingDeletePromoId" (click)="cancelDeletePromo()">
+  <div class="modal-box delete-confirm-box" (click)="$event.stopPropagation()">
+    <div class="delete-confirm-icon">
+      <i class="bi bi-trash3"></i>
+    </div>
+    <h2>Delete Promo Code?</h2>
+    <p class="delete-confirm-sub">This action is permanent and cannot be undone.</p>
+    <div class="modal-actions">
+      <button type="button" class="btn-cancel" (click)="cancelDeletePromo()">Cancel</button>
+      <button type="button" class="btn-delete-confirm" (click)="confirmDeletePromo()">
+        <i class="bi bi-trash3"></i> Delete
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast Notifications -->
+<div class="toast-container">
+  <div
+    *ngFor="let t of toasts"
+    class="toast-item"
+    [class.toast-success]="t.type === 'success'"
+    [class.toast-error]="t.type === 'error'"
+    [class.toast-info]="t.type === 'info'"
+  >
+    <i
+      class="bi"
+      [class.bi-check-circle-fill]="t.type === 'success'"
+      [class.bi-x-circle-fill]="t.type === 'error'"
+      [class.bi-info-circle-fill]="t.type === 'info'"
+    ></i>
+    <span>{{ t.message }}</span>
+    <button (click)="dismissToast(t.id)"><i class="bi bi-x"></i></button>
   </div>
 </div>
