@@ -214,18 +214,22 @@
 //   logout(): void {
 //     this.auth.logout();
 //   }
-// }
-import { Component, OnInit, OnDestroy } from '@angular/core';
-import { CommonModule, CurrencyPipe } from '@angular/common';
-import { FormsModule } from '@angular/forms';
-import { RouterLink, Router } from '@angular/router';
-import { HttpClient } from '@angular/common/http';
 import { Subscription } from 'rxjs';
 
-import { StaticProducts } from '../../services/static-products';
-import { ProductService, IProductPayload } from '../../services/product.service';
+import { CommonModule, CurrencyPipe } from '@angular/common';
+import { HttpClient } from '@angular/common/http';
+// }
+import { Component, OnDestroy, OnInit } from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import { Router, RouterLink } from '@angular/router';
+
 import { IProduct } from '../../models/iproduct';
-import { AuthService, IPromoCode, IBanner } from '../../services/auth.service';
+import { AuthService, IBanner, IPromoCode } from '../../services/auth.service';
+import {
+	IProductPayload,
+	ProductService,
+} from '../../services/product.service';
+import { StaticProducts } from '../../services/static-products';
 
 export interface IApiCategory {
   _id: string;
@@ -242,6 +246,7 @@ export interface IDbUser {
   deletedAt: string | null;
   createdAt: string;
 }
+<<<<<<< HEAD
 
 export interface IDbOrderProduct {
   product: { _id: string; name: string; price: number; image: string };
@@ -267,6 +272,20 @@ export interface IDbOrder {
 
 const ORDER_STATUSES = ['pending', 'processing', 'shipped', 'delivered', 'cancelled'];
 
+=======
+export interface IApiPromo {
+  _id: string;
+  code: string;
+  discountType: 'percentage' | 'fixed';
+  discountValue: number;
+  maxUses?: number;
+  expiresAt?: string;
+  isActive: boolean;
+  usedCount?: number; // ← was usageCount
+  createdAt?: string;
+  updatedAt?: string;
+}
+>>>>>>> c5c248fb04b235300ff2ba9e58b31c44e8a87d9a
 @Component({
   selector: 'app-admin-dashboard',
   standalone: true,
@@ -278,7 +297,24 @@ export class AdminDashboard implements OnInit, OnDestroy {
   private sub!: Subscription;
   private readonly apiUrl = 'http://localhost:3000/api';
 
+<<<<<<< HEAD
   // Products
+=======
+  // Toast notifications
+  toasts: { id: number; message: string; type: 'success' | 'error' | 'info' }[] = [];
+  private toastCounter = 0;
+
+  showToast(message: string, type: 'success' | 'error' | 'info' = 'success'): void {
+    const id = ++this.toastCounter;
+    this.toasts.push({ id, message, type });
+    setTimeout(() => {
+      this.toasts = this.toasts.filter((t) => t.id !== id);
+    }, 3500);
+  }
+  dismissToast(id: number): void {
+    this.toasts = this.toasts.filter((t) => t.id !== id);
+  }
+>>>>>>> c5c248fb04b235300ff2ba9e58b31c44e8a87d9a
   products: IProduct[] = [];
   activeTab = 'products';
   searchTerm = '';
@@ -309,8 +345,10 @@ export class AdminDashboard implements OnInit, OnDestroy {
 
   // Promo codes
   showPromoModal = false;
-  editingPromo: IPromoCode | null = null;
-  promoForm: Partial<IPromoCode> = {};
+  editingPromo: IApiPromo | null = null;
+  promoForm: Partial<IApiPromo> = {};
+  apiPromos: IApiPromo[] = [];
+  promosLoading = false;
 
   // Banners
   showBannerModal = false;
@@ -345,11 +383,21 @@ export class AdminDashboard implements OnInit, OnDestroy {
   // ── Tab switch ─────────────────────────────────────
   onTabChange(tab: string): void {
     this.activeTab = tab;
+<<<<<<< HEAD
     if (tab === 'users' && this.dbUsers.length === 0) this.loadUsers();
     if (tab === 'orders' && this.dbOrders.length === 0) this.loadOrders();
   }
 
   // ── Users ──────────────────────────────────────────
+=======
+    if (tab === 'users' && this.dbUsers.length === 0) {
+      this.loadUsers();
+    }
+    if (tab === 'promos' && this.apiPromos.length === 0) {
+      this.loadPromos();
+    }
+  }
+>>>>>>> c5c248fb04b235300ff2ba9e58b31c44e8a87d9a
   loadUsers(): void {
     this.usersLoading = true;
     this.http.get<any>(`${this.apiUrl}/user/all`).subscribe({
@@ -530,16 +578,40 @@ export class AdminDashboard implements OnInit, OnDestroy {
   }
 
   // ── Promo Codes ────────────────────────────────────
+<<<<<<< HEAD
   get promoCodes() {
     return this.auth.promoCodes();
+=======
+
+  // ── Promo Codes ────────────────────────────────────────
+
+  loadPromos(): void {
+    this.promosLoading = true;
+    this.http.get<any>(`${this.apiUrl}/promo`).subscribe({
+      next: (res) => {
+        this.apiPromos = res.data?.promos ?? res.data ?? res.promos ?? [];
+        this.promosLoading = false;
+      },
+      error: (err) => {
+        console.error('Failed to load promos', err);
+        this.showToast('Failed to load promo codes', 'error');
+        this.promosLoading = false;
+      },
+    });
+>>>>>>> c5c248fb04b235300ff2ba9e58b31c44e8a87d9a
   }
 
   openAddPromo(): void {
     this.editingPromo = null;
-    this.promoForm = { discountType: 'percent', active: true };
+    this.promoForm = { discountType: 'percentage', isActive: true };
     this.showPromoModal = true;
   }
+<<<<<<< HEAD
   openEditPromo(p: IPromoCode): void {
+=======
+
+  openEditPromo(p: IApiPromo): void {
+>>>>>>> c5c248fb04b235300ff2ba9e58b31c44e8a87d9a
     this.editingPromo = p;
     this.promoForm = { ...p };
     this.showPromoModal = true;
@@ -547,26 +619,98 @@ export class AdminDashboard implements OnInit, OnDestroy {
 
   savePromo(): void {
     if (!this.promoForm.code || !this.promoForm.discountValue) return;
+
+    const payload: any = {
+      code: this.promoForm.code!.toUpperCase(),
+      discountType: this.promoForm.discountType ?? 'percentage',
+      discountValue: this.promoForm.discountValue!,
+      isActive: this.promoForm.isActive ?? true,
+    };
+    if (this.promoForm.maxUses != null) payload.maxUses = this.promoForm.maxUses;
+    if (this.promoForm.expiresAt) payload.expiresAt = this.promoForm.expiresAt;
+
     if (this.editingPromo) {
-      this.auth.updatePromoCode(this.editingPromo.id, this.promoForm);
+      this.http.put<any>(`${this.apiUrl}/promo/${this.editingPromo._id}`, payload).subscribe({
+        next: () => {
+          this.loadPromos();
+          this.showPromoModal = false;
+          this.showToast('Promo code updated successfully');
+        },
+        error: (err) => {
+          console.error('Update promo failed', err);
+          this.showToast(err.error?.message || 'Failed to update promo code', 'error');
+        },
+      });
     } else {
-      this.auth.addPromoCode({
-        code: this.promoForm.code!.toUpperCase(),
-        discountType: this.promoForm.discountType || 'percent',
-        discountValue: this.promoForm.discountValue!,
-        active: this.promoForm.active ?? true,
+      this.http.post<any>(`${this.apiUrl}/promo`, payload).subscribe({
+        next: () => {
+          this.loadPromos();
+          this.showPromoModal = false;
+          this.showToast('Promo code added successfully');
+        },
+        error: (err) => {
+          // Promo was saved to DB but API returned an error (e.g. duplicate key race)
+          // Reload the list so the new promo appears, close modal, show the server message
+          this.loadPromos();
+          this.showPromoModal = false;
+          const msg = err.error?.message || 'Promo code already exists';
+          this.showToast(msg, 'error');
+        },
       });
     }
-    this.showPromoModal = false;
   }
 
-  deletePromo(id: number): void {
-    if (confirm('Delete promo code?')) this.auth.deletePromoCode(id);
+  pendingDeletePromoId: string | null = null;
+
+  deletePromo(id: string): void {
+    this.pendingDeletePromoId = id;
   }
+<<<<<<< HEAD
   togglePromo(id: number, active: boolean): void {
     this.auth.updatePromoCode(id, { active });
+=======
+
+  confirmDeletePromo(): void {
+    if (!this.pendingDeletePromoId) return;
+    const id = this.pendingDeletePromoId;
+    this.pendingDeletePromoId = null; // ← close modal immediately
+    this.http.delete<any>(`${this.apiUrl}/promo/${id}`).subscribe({
+      next: () => {
+        this.loadPromos();
+        this.showToast('Promo code deleted');
+      },
+      error: (err) => {
+        console.error('Delete promo failed', err);
+        this.showToast(err.error?.message || 'Failed to delete promo code', 'error');
+      },
+    });
+>>>>>>> c5c248fb04b235300ff2ba9e58b31c44e8a87d9a
   }
 
+  cancelDeletePromo(): void {
+    this.pendingDeletePromoId = null; // ← close modal immediately
+  }
+  togglePromo(promo: IApiPromo): void {
+    const payload = {
+      code: promo.code,
+      discountType: promo.discountType,
+      discountValue: promo.discountValue,
+      isActive: !promo.isActive,
+      ...(promo.maxUses != null && { maxUses: promo.maxUses }),
+      ...(promo.expiresAt && { expiresAt: promo.expiresAt }),
+    };
+
+    this.http.put<any>(`${this.apiUrl}/promo/${promo._id}`, payload).subscribe({
+      next: () => {
+        this.loadPromos();
+        this.showToast(`Promo code ${!promo.isActive ? 'activated' : 'deactivated'}`);
+      },
+      error: (err) => {
+        console.error('Toggle promo failed', err);
+        this.showToast('Failed to update promo status', 'error');
+      },
+    });
+  }
   // ── Banners ────────────────────────────────────────
   get banners() {
     return this.auth.banners();
