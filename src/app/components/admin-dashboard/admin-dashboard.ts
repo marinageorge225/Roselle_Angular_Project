@@ -243,6 +243,30 @@ export interface IDbUser {
   createdAt: string;
 }
 
+export interface IDbOrderProduct {
+  product: { _id: string; name: string; price: number; image: string };
+  quantity: number;
+  price: number;
+}
+
+export interface IDbOrder {
+  _id: string;
+  user_id: string | null;
+  products: IDbOrderProduct[];
+  totalAmount: number;
+  discount: number;
+  promoCode: string | null;
+  status: string;
+  paymentMethod: string;
+  shippingAddress: { governorate: string; city: string; street: string };
+  guestInfo?: { name: string; email: string; phone: string };
+  createdAt: string;
+  // local UI state — not from API
+  savingStatus?: boolean;
+}
+
+const ORDER_STATUSES = ['pending', 'processing', 'shipped', 'delivered', 'cancelled'];
+
 @Component({
   selector: 'app-admin-dashboard',
   standalone: true,
@@ -252,18 +276,16 @@ export interface IDbUser {
 })
 export class AdminDashboard implements OnInit, OnDestroy {
   private sub!: Subscription;
-
   private readonly apiUrl = 'http://localhost:3000/api';
 
+  // Products
   products: IProduct[] = [];
   activeTab = 'products';
   searchTerm = '';
   showModal = false;
   saving = false;
   editingProduct: IProduct | null = null;
-
   apiCategories: IApiCategory[] = [];
-
   form: {
     name?: string;
     price?: number;
@@ -274,9 +296,16 @@ export class AdminDashboard implements OnInit, OnDestroy {
     gender?: 'men' | 'women' | 'unisex';
   } = {};
 
-  // Users from DB
+  // Users
   dbUsers: IDbUser[] = [];
   usersLoading = false;
+
+  // Orders
+  dbOrders: IDbOrder[] = [];
+  ordersLoading = false;
+  orderStatuses = ORDER_STATUSES;
+  orderStatusFilter = 'all';
+  orderSearch = '';
 
   // Promo codes
   showPromoModal = false;
@@ -301,11 +330,9 @@ export class AdminDashboard implements OnInit, OnDestroy {
       this.router.navigate(['/login']);
       return;
     }
-
     this.sub = this.productStore.products$.subscribe((prds) => {
       this.products = prds;
     });
-
     this.http.get<any>(`${this.apiUrl}/categories?limit=50`).subscribe((res) => {
       this.apiCategories = res.data?.categories ?? [];
     });
@@ -315,14 +342,14 @@ export class AdminDashboard implements OnInit, OnDestroy {
     this.sub?.unsubscribe();
   }
 
-  // ── Tab switch — load users on demand ─────────────
+  // ── Tab switch ─────────────────────────────────────
   onTabChange(tab: string): void {
     this.activeTab = tab;
-    if (tab === 'users' && this.dbUsers.length === 0) {
-      this.loadUsers();
-    }
+    if (tab === 'users' && this.dbUsers.length === 0) this.loadUsers();
+    if (tab === 'orders' && this.dbOrders.length === 0) this.loadOrders();
   }
 
+  // ── Users ──────────────────────────────────────────
   loadUsers(): void {
     this.usersLoading = true;
     this.http.get<any>(`${this.apiUrl}/user/all`).subscribe({
@@ -346,8 +373,71 @@ export class AdminDashboard implements OnInit, OnDestroy {
     });
   }
 
-  // ── Products ───────────────────────────────────────
+  // ── Orders ─────────────────────────────────────────
+  loadOrders(): void {
+    this.ordersLoading = true;
+    this.http.get<any>(`${this.apiUrl}/order/all`).subscribe({
+      next: (res) => {
+        this.dbOrders = res.orders ?? [];
+        this.ordersLoading = false;
+      },
+      error: (err) => {
+        console.error('Failed to load orders', err);
+        this.ordersLoading = false;
+      },
+    });
+  }
 
+  get filteredOrders(): IDbOrder[] {
+    return this.dbOrders.filter((o) => {
+      const matchStatus = this.orderStatusFilter === 'all' || o.status === this.orderStatusFilter;
+      const term = this.orderSearch.toLowerCase();
+      const matchSearch =
+        !term ||
+        o._id.toLowerCase().includes(term) ||
+        (o.guestInfo?.name ?? '').toLowerCase().includes(term) ||
+        o.shippingAddress.governorate.toLowerCase().includes(term);
+      return matchStatus && matchSearch;
+    });
+  }
+
+  getCustomerName(order: IDbOrder): string {
+    if (order.guestInfo?.name) return order.guestInfo.name + ' (Guest)';
+    return order.user_id ? 'Registered User' : 'Unknown';
+  }
+
+  changeOrderStatus(order: IDbOrder, newStatus: string): void {
+    order.savingStatus = true;
+    this.http
+      .patch<any>(`${this.apiUrl}/order/status/${order._id}`, { status: newStatus })
+      .subscribe({
+        next: (res) => {
+          order.status = res.order.status;
+          order.savingStatus = false;
+        },
+        error: (err) => {
+          console.error('Status update failed', err);
+          order.savingStatus = false;
+        },
+      });
+  }
+
+  getStatusColor(status: string): string {
+    const map: Record<string, string> = {
+      pending: '#f59e0b',
+      processing: '#3b82f6',
+      shipped: '#8b5cf6',
+      delivered: '#22c55e',
+      cancelled: '#ef4444',
+    };
+    return map[status] ?? '#7a6e68';
+  }
+
+  getOrderItemCount(order: IDbOrder): number {
+    return order.products.reduce((s, p) => s + p.quantity, 0);
+  }
+
+  // ── Products ───────────────────────────────────────
   get filteredProducts(): IProduct[] {
     return this.products.filter((p) =>
       p.name.toLowerCase().includes(this.searchTerm.toLowerCase()),
@@ -356,11 +446,7 @@ export class AdminDashboard implements OnInit, OnDestroy {
 
   openAdd(): void {
     this.editingProduct = null;
-    this.form = {
-      categoryId: this.apiCategories[0]?._id ?? '',
-      stock: 1,
-      gender: 'unisex',
-    };
+    this.form = { categoryId: this.apiCategories[0]?._id ?? '', stock: 1, gender: 'unisex' };
     this.showModal = true;
   }
 
@@ -384,9 +470,7 @@ export class AdminDashboard implements OnInit, OnDestroy {
 
   save(): void {
     if (!this.form.name || !this.form.price || !this.form.categoryId) return;
-
     this.saving = true;
-
     const payload: IProductPayload = {
       name: this.form.name,
       description: this.form.description || '',
@@ -396,16 +480,14 @@ export class AdminDashboard implements OnInit, OnDestroy {
       image: this.form.imgUrl || '',
       gender: this.form.gender ?? 'unisex',
     };
-
     if (this.editingProduct) {
       this.productApi.updateProduct(this.editingProduct._id, payload).subscribe({
         next: () => {
           this.productStore.reloadProducts();
-          this.showModal = false; // ← close modal on success
+          this.showModal = false;
           this.saving = false;
         },
         error: (err) => {
-          console.error('Update failed', err);
           alert('Update failed: ' + (err.error?.message || err.message));
           this.saving = false;
         },
@@ -414,11 +496,10 @@ export class AdminDashboard implements OnInit, OnDestroy {
       this.productApi.createProduct(payload).subscribe({
         next: () => {
           this.productStore.reloadProducts();
-          this.showModal = false; // ← close modal on success
+          this.showModal = false;
           this.saving = false;
         },
         error: (err) => {
-          console.error('Create failed', err);
           alert('Create failed: ' + (err.error?.message || err.message));
           this.saving = false;
         },
@@ -437,28 +518,18 @@ export class AdminDashboard implements OnInit, OnDestroy {
   getCategoryName(categoryId: any): string {
     const id =
       typeof categoryId === 'object' ? categoryId?._id?.toString() : categoryId?.toString();
-    const found = this.apiCategories.find((c) => c._id === id);
-    return found?.category_name ?? id ?? 'Unknown';
+    return this.apiCategories.find((c) => c._id === id)?.category_name ?? id ?? 'Unknown';
   }
 
   // ── Featured ───────────────────────────────────────
-
   isFeatured(id: string): boolean {
     return this.auth.featuredProductIds().includes(id);
   }
-
   toggleFeatured(id: string): void {
     this.auth.toggleFeaturedProduct(id);
   }
 
-  // ── Orders ─────────────────────────────────────────
-
-  get orders() {
-    return this.auth.allOrders;
-  }
-
   // ── Promo Codes ────────────────────────────────────
-
   get promoCodes() {
     return this.auth.promoCodes();
   }
@@ -468,7 +539,6 @@ export class AdminDashboard implements OnInit, OnDestroy {
     this.promoForm = { discountType: 'percent', active: true };
     this.showPromoModal = true;
   }
-
   openEditPromo(p: IPromoCode): void {
     this.editingPromo = p;
     this.promoForm = { ...p };
@@ -493,13 +563,11 @@ export class AdminDashboard implements OnInit, OnDestroy {
   deletePromo(id: number): void {
     if (confirm('Delete promo code?')) this.auth.deletePromoCode(id);
   }
-
   togglePromo(id: number, active: boolean): void {
     this.auth.updatePromoCode(id, { active });
   }
 
   // ── Banners ────────────────────────────────────────
-
   get banners() {
     return this.auth.banners();
   }
@@ -509,7 +577,6 @@ export class AdminDashboard implements OnInit, OnDestroy {
     this.bannerForm = { active: true };
     this.showBannerModal = true;
   }
-
   openEditBanner(b: IBanner): void {
     this.editingBanner = b;
     this.bannerForm = { ...b };
@@ -534,23 +601,19 @@ export class AdminDashboard implements OnInit, OnDestroy {
   deleteBanner(id: number): void {
     if (confirm('Delete banner?')) this.auth.deleteBanner(id);
   }
-
   toggleBanner(id: number, active: boolean): void {
     this.auth.updateBanner(id, { active });
   }
 
   // ── Stats ──────────────────────────────────────────
-
   get stats() {
-    const blocked = this.dbUsers.filter((u) => u.isblocked).length;
-    const normalUsers = this.dbUsers.filter((u) => u.role === 'user').length;
     return {
       totalProducts: this.products.length,
-      totalOrders: this.orders.length,
-      totalRevenue: this.orders.reduce((s, o) => s + o.total, 0),
+      totalOrders: this.dbOrders.length,
+      totalRevenue: this.dbOrders.reduce((s, o) => s + o.totalAmount, 0),
       lowStock: this.products.filter((p) => (p.stock ?? p.quantity) <= 2).length,
-      totalUsers: normalUsers,
-      restrictedUsers: blocked,
+      totalUsers: this.dbUsers.filter((u) => u.role === 'user').length,
+      restrictedUsers: this.dbUsers.filter((u) => u.isblocked).length,
     };
   }
 

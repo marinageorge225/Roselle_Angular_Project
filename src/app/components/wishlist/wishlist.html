@@ -78,7 +78,7 @@
   </header>
 
   <div class="container page-body">
-    <!-- Empty -->
+    <!-- Empty State -->
     <div *ngIf="isEmpty" class="empty-state">
       <div class="empty-icon"><i class="bi bi-heart"></i></div>
       <h2>Your wishlist is empty</h2>
@@ -97,8 +97,8 @@
       <div class="wishlist-grid">
         <div *ngFor="let p of wishlistProducts" class="wish-card">
           <div class="wish-img-wrap">
-            <img [src]="p.imgUrl" [alt]="p.name" />
-            <button class="btn-remove" (click)="remove(p._id)" title="Remove from wishlist">
+            <img [src]="p.imgUrl || p.image" [alt]="p.name" />
+            <button class="btn-remove" (click)="remove(p)" title="Remove from wishlist">
               <i class="bi bi-heart-fill"></i>
             </button>
           </div>
@@ -106,15 +106,21 @@
           <div class="wish-info">
             <a [routerLink]="['/Details', p._id]" class="wish-name">{{ p.name }}</a>
             <span class="wish-price">{{ p.price | currency: 'EGP' : 'symbol' : '1.0-0' }}</span>
-            <span class="wish-stock" [class.low]="p.quantity <= 2">
-              {{ p.quantity <= 2 ? 'Only ' + p.quantity + ' left!' : 'In Stock' }}
+            <span class="wish-stock" [class.low]="p.stock <= 2">
+              {{ p.stock <= 2 ? 'Only ' + p.stock + ' left!' : 'In Stock' }}
             </span>
           </div>
 
           <div class="wish-actions">
-            <button class="btn-cart" (click)="addToCart(p)" [disabled]="isInCart(p._id)">
+            <button
+              class="btn-cart"
+              (click)="addToCart(p)"
+              [disabled]="isInCart(p._id) || addingToCartId === p._id"
+            >
               <i class="bi bi-bag-plus me-1"></i>
-              {{ isInCart(p._id) ? 'In Cart' : 'Add to Cart' }}
+              {{
+                isInCart(p._id) ? 'In Cart' : addingToCartId === p._id ? 'Adding...' : 'Add to Cart'
+              }}
             </button>
             <button class="btn-view" [routerLink]="['/Details', p._id]">
               <i class="bi bi-eye"></i>
