@@ -1,7 +1,8 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, signal } from '@angular/core';
 import { Router } from '@angular/router';
-export const BaseUrl: string = 'https://roselle-shop.vercel.app';
+import { Observable } from 'rxjs';
+export const BaseUrl: string = 'http://localhost:3000';
 
 
 export interface IUser {
@@ -10,7 +11,7 @@ export interface IUser {
   name: string;
   email: string;
   phone?: string;
-  address?: string;
+  Address?: string;
   paymentDetails?: { cardHolder?: string; cardNumber?: string; expiry?: string };
   role: 'user' | 'admin';
   verified: boolean;
@@ -131,7 +132,7 @@ export class AuthService {
       verified: true,
       status: 'active',
       phone: '01000000000',
-      address: 'Cairo, Egypt',
+      Address: 'Cairo, Egypt',
     },
     {
       id: 3,
@@ -182,8 +183,12 @@ export class AuthService {
   }
 
   signup_google(idToken: any) {
-    return this.http.post(`${BaseUrl}/api/user/signup_bygoogle`, { idToken });
-  }
+  return this.http.post(
+    `${BaseUrl}/api/user/signup_bygoogle`, 
+    { idToken },
+    { withCredentials: true } 
+  );
+}
 
   verifyOtp(otp: string) {
     const email = this._pendingEmail();
@@ -246,42 +251,8 @@ export class AuthService {
 
   // ── Profile ────────────────────────────────────────
   // Works for both API users and local users
-  updateProfile(data: {
-    name?: string;
-    phone?: string;
-    address?: string;
-    paymentDetails?: IUser['paymentDetails'];
-  }): void {
-    const current = this._currentUser();
-    if (!current) return;
-
-    // Try local users array first (for hardcoded users)
-    const localUser = this.users.find((u) => u.id === current.id);
-    if (localUser) {
-      if (data.name) localUser.name = data.name;
-      if (data.phone !== undefined) localUser.phone = data.phone;
-      if (data.address !== undefined) localUser.address = data.address;
-      if (data.paymentDetails) localUser.paymentDetails = data.paymentDetails;
-      this._currentUser.set({ ...localUser });
-    } else {
-      // API user — update the signal directly
-      const updated: IUser = {
-        ...current,
-        ...(data.name && { name: data.name }),
-        ...(data.phone !== undefined && { phone: data.phone }),
-        ...(data.address !== undefined && { address: data.address }),
-        ...(data.paymentDetails && { paymentDetails: data.paymentDetails }),
-      };
-      this._currentUser.set(updated);
-    }
-  }
-
-  // ── Wishlist ───────────────────────────────────────
-  get wishlist(): string[] {
-    const key = this.userKey;
-    if (!key) return [];
-    return this._userWishlists()[key] ?? [];
-  }
+ 
+ 
 
   toggleWishlist(productId: string): void {
     const key = this.userKey;
@@ -297,19 +268,39 @@ export class AuthService {
     });
   }
 
-  isInWishlist(productId: string): boolean {
-    return this.wishlist.includes(productId);
-  }
-  get wishlistCount(): number {
-    return this.wishlist.length;
-  }
+isInWishlist(productId: string): boolean {
+  const key = this.userKey;
+  if (!key) return false;
+  return (this._userWishlists()[key] ?? []).includes(productId);
+}
 
-  // ── Orders ─────────────────────────────────────────
-  get orders(): IOrder[] {
-    const key = this.userKey;
-    if (!key) return [];
-    return this._userOrders()[key] ?? [];
-  }
+get wishlist(): string[] {
+  const key = this.userKey;
+  if (!key) return [];
+  return this._userWishlists()[key] ?? [];
+}
+
+get wishlistCount(): number {
+  return this.wishlist.length;
+}
+
+orders(): Observable<IOrder[]> {
+  return this.http.get<IOrder[]>(`${BaseUrl}/api/order/`);
+}
+
+updateProfile(data: {
+  name?: string;
+  phone?: string;
+  Address?: string;  
+  paymentDetails?: IUser['paymentDetails'];
+}): Observable<any> {
+  return this.http.patch(`${BaseUrl}/api/user/update_user`, data);
+}
+
+delete(): Observable<any> {
+  return this.http.delete(`${BaseUrl}/api/user/delete_user`);
+}
+
 
   get allOrders(): IOrder[] {
     return Object.values(this._userOrders()).flat();

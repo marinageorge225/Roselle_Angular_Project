@@ -26,7 +26,6 @@
         <button [class.active]="activeTab === 'address'" (click)="activeTab = 'address'">
           <i class="bi bi-geo-alt"></i> Address
         </button>
-      
       </nav>
 
       <div class="profile-links">
@@ -37,9 +36,15 @@
 
     <!-- Main Content -->
     <main class="profile-main">
+
       <!-- Success Toast -->
       <div class="success-toast" *ngIf="successMsg">
         <i class="bi bi-check-circle-fill"></i> {{ successMsg }}
+      </div>
+
+      <!-- Error Toast -->
+      <div class="error-toast" *ngIf="errorMsg">
+        <i class="bi bi-x-circle-fill"></i> {{ errorMsg }}
       </div>
 
       <!-- Personal Info -->
@@ -63,8 +68,8 @@
             <input type="tel" [(ngModel)]="phone" placeholder="e.g. 01000000000" />
           </div>
         </div>
-        <button class="btn-save" (click)="savePersonal()">
-          <i class="bi bi-check2"></i> Save Changes
+        <button class="btn-save" (click)="savePersonal()" [disabled]="isLoading">
+          <i class="bi bi-check2"></i> {{ isLoading ? 'Saving...' : 'Save Changes' }}
         </button>
       </div>
 
@@ -84,57 +89,40 @@
             ></textarea>
           </div>
         </div>
-        <button class="btn-save" (click)="saveAddress()">
-          <i class="bi bi-check2"></i> Save Address
+        <button class="btn-save" (click)="saveAddress()" [disabled]="isLoading">
+          <i class="bi bi-check2"></i> {{ isLoading ? 'Saving...' : 'Save Address' }}
         </button>
       </div>
 
-      <!-- Payment Details -->
-      <div *ngIf="activeTab === 'payment'" class="profile-card">
+      <!-- Delete Account -->
+      <div class="profile-card danger-card">
         <div class="card-header">
-          <h2><i class="bi bi-credit-card"></i> Payment Details</h2>
-          <p>Manage your saved card information</p>
+          <h2><i class="bi bi-trash3"></i> Delete Account</h2>
+          <p>Permanently remove your account and all associated data</p>
         </div>
 
-        <!-- Card Preview -->
-        <div class="card-preview" *ngIf="cardNumber">
-          <div class="cp-chip"><i class="bi bi-sim"></i></div>
-          <div class="cp-number">{{ maskedCard }}</div>
-          <div class="cp-bottom">
-            <div>
-              <div class="cp-lbl">Card Holder</div>
-              <div class="cp-val">{{ cardHolder || '—' }}</div>
-            </div>
-            <div>
-              <div class="cp-lbl">Expires</div>
-              <div class="cp-val">{{ expiry || '—' }}</div>
-            </div>
-          </div>
+        <div *ngIf="!showDeleteConfirm">
+          <button class="btn-danger" (click)="confirmDelete()">
+            <i class="bi bi-trash3"></i> Delete My Account
+          </button>
         </div>
 
-        <div class="form-grid">
-          <div class="form-field full-width">
-            <label>Cardholder Name</label>
-            <input type="text" [(ngModel)]="cardHolder" placeholder="Name as on card" />
-          </div>
-          <div class="form-field">
-            <label>Card Number</label>
-            <input
-              type="text"
-              [(ngModel)]="cardNumber"
-              placeholder="1234 5678 9012 3456"
-              maxlength="19"
-            />
-          </div>
-          <div class="form-field">
-            <label>Expiry Date</label>
-            <input type="text" [(ngModel)]="expiry" placeholder="MM/YY" maxlength="5" />
+        <div *ngIf="showDeleteConfirm" class="delete-confirm">
+          <p class="confirm-text">
+            <i class="bi bi-exclamation-triangle-fill"></i>
+            Are you sure? This action <strong>cannot be undone</strong>.
+          </p>
+          <div class="confirm-actions">
+            <button class="btn-cancel" (click)="cancelDelete()">
+              <i class="bi bi-x"></i> Cancel
+            </button>
+            <button class="btn-danger" (click)="deleteAccount()">
+              <i class="bi bi-trash3"></i> Yes, Delete My Account
+            </button>
           </div>
         </div>
-        <button class="btn-save" (click)="savePayment()">
-          <i class="bi bi-check2"></i> Save Payment Info
-        </button>
       </div>
+
     </main>
   </div>
 </div>

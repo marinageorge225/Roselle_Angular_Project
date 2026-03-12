@@ -69,7 +69,7 @@ export class Checkout implements OnInit {
       this.email = user.email;
       this.firstName = user.name.split(' ')[0];
       this.lastName = user.name.split(' ').slice(1).join(' ');
-      if (user.address) this.address = user.address;
+      if (user.Address) this.address = user.Address;
     }
     if (this.cartItems.length === 0) this.router.navigate(['/cart']);
   }

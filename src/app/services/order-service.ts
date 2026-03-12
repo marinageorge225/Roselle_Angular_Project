@@ -37,6 +37,7 @@ export class OrderService {
   constructor(private http: HttpClient) {}
 
   createOrder(payload: ICreateOrderPayload): Observable<{ message: string; order: IBackendOrder }> {
+    console.log(payload)
     return this.http.post<{ message: string; order: IBackendOrder }>(this.base, payload);
   }
 
